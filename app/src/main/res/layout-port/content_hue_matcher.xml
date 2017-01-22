@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content_hue_matcher"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.oakonell.huematch.HueExampleActivity"
+    tools:showIn="@layout/activity_hue_matcher">
+
+
+    <com.google.android.cameraview.CameraView
+        android:id="@+id/camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        app:aspectRatio="4:3"
+        app:autoFocus="true"
+        app:facing="back"
+        app:flash="off" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true">
+
+        <Button
+            android:id="@+id/snapshot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/snapshot" />
+
+        <Button
+            android:id="@+id/continuous"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/video"
+
+            />
+    </LinearLayout>
+
+</RelativeLayout>
