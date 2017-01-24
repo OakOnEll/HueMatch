@@ -102,10 +102,10 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
 
         @Override
         public void onAccessPointsFound(List<PHAccessPoint> accessPoint) {
-            Log.w(TAG, "Access Points Found. " + accessPoint.size());
 
             PHWizardAlertDialog.getInstance().closeProgressDialog();
             if (accessPoint != null && accessPoint.size() > 0) {
+                Log.w(TAG, "Access Points Found. " + accessPoint.size());
                 phHueSDK.getAccessPointsFound().clear();
                 phHueSDK.getAccessPointsFound().addAll(accessPoint);
 
@@ -115,6 +115,9 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
                         adapter.updateData(phHueSDK.getAccessPointsFound());
                     }
                 });
+
+            } else {
+                Log.w(TAG, "No Access Points Found.");
 
             }
 

@@ -9,7 +9,7 @@
     <string name="btn_random">Random Lights</string>
     <string name="search_progress">Searching ...</string>
     <string name="connecting">Connecting ...</string>
-    <string name="btn_ok">Ok</string>
+    <string name="btn_ok">OK</string>
     <string name="btn_cancel">Cancel</string>
     <string name="txt_could_not_connect">No connection</string>
     <string name="could_not_find_bridge">Hue cannot find your bridge. Please check that it is connected to the same Wi-Fi router as your app and press</string>

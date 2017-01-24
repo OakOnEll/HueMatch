@@ -33,7 +33,7 @@ public final class PHWizardAlertDialog {
     /**
      *
      * @param activityContext
-     * @param resID
+     * @param msg
      * @param btnNameResId  String resource id for button name
      */
     public static void showErrorDialog(Context activityContext, String msg, int btnNameResId) {
@@ -62,7 +62,7 @@ public final class PHWizardAlertDialog {
      * Shows progress-bar
      *
      * @param resID
-     * @param act
+     * @param ctx
      */
     public void showProgressDialog(int resID, Context ctx) {
         String message = ctx.getString(resID);
