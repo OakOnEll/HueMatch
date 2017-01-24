@@ -12,6 +12,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
+import com.crashlytics.android.Crashlytics;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHBridgeSearchManager;
 import com.philips.lighting.hue.sdk.PHHueSDK;
@@ -22,6 +23,8 @@ import com.philips.lighting.model.PHHueError;
 import com.philips.lighting.model.PHHueParsingError;
 
 import java.util.List;
+
+import io.fabric.sdk.android.Fabric;
 
 /**
  * PHHomeActivity - The starting point in your own Hue App.
@@ -46,6 +49,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.bridgelistlinear);
 
         // Gets an instance of the Hue SDK.
@@ -266,8 +270,8 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
     // Starting the main activity this way, prevents the PushLink Activity being shown when pressing the back button.
     public void startMainActivity() {
         //Intent intent = new Intent(getApplicationContext(), HueExampleActivity.class);
-        //Intent intent = new Intent(getApplicationContext(), HueMatcherActivity.class);
-        Intent intent = new Intent(getApplicationContext(), Camera2Activity.class);
+        //Intent intent = new Intent(getApplicationContext(), HueMatcherActivityOld.class);
+        Intent intent = new Intent(getApplicationContext(), HueMatcherActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)

@@ -8,12 +8,15 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.ProgressBar;
 
+import com.crashlytics.android.Crashlytics;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.hue.sdk.PHMessageType;
 import com.philips.lighting.hue.sdk.PHSDKListener;
 import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHHueParsingError;
+
+import io.fabric.sdk.android.Fabric;
 
 /**
  * Activity which gives hint for manual pushlink. needs to add <activity
@@ -31,6 +34,7 @@ public class PHPushlinkActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.pushlink);
         setTitle(R.string.txt_pushlink);
         isDialogShowing=false;
