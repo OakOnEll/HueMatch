@@ -13,7 +13,6 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -55,7 +54,6 @@ import com.philips.lighting.model.PHHueError;
 import com.philips.lighting.model.PHLight;
 import com.philips.lighting.model.PHLightState;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -76,35 +74,24 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private static final String FRAGMENT_DIALOG = "dialog";
 
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90); // horizontal - correct
-        ORIENTATIONS.append(Surface.ROTATION_90, 0); //vert opposite - 90 off
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);  // upside down horiuz-  upside down?
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);  // vertical - 90 off
-    }
 
     private static final int REQUEST_CAMERA_PERMISSION = 200;
+    private static final boolean DEBUG = false;
     private Size mPreviewSize;
 
     enum CaptureState {
-        OFF, STILL, CONTINUOUS;
+        OFF, STILL, CONTINUOUS
     }
 
     private AutoFitTextureView textureView;
 
-    /**
-     * Orientation of the camera sensor
-     */
-    private int mSensorOrientation;
-    protected CameraDevice cameraDevice;
-    protected CameraCaptureSession cameraCaptureSessions;
-    protected CaptureRequest.Builder captureRequestBuilder;
+    private CameraDevice cameraDevice;
+    private CameraCaptureSession cameraCaptureSessions;
+    private CaptureRequest.Builder captureRequestBuilder;
     /**
      * A {@link Semaphore} to prevent the app from exiting before closing the camera.
      */
-    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+    private final Semaphore mCameraOpenCloseLock = new Semaphore(1);
 
 
     private Size imageDimension;
@@ -187,7 +174,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         });
     }
 
-    TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
+    private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
             //open your camera here
@@ -242,28 +229,28 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     };
 
-    protected void startBackgroundThread() {
+    private void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("Camera Background");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
 
-    protected void stopBackgroundThread() {
+    private void stopBackgroundThread() {
         mBackgroundThread.quitSafely();
         try {
             mBackgroundThread.join();
             mBackgroundThread = null;
             mBackgroundHandler = null;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Interupted while joining to background thread", e);
         }
     }
 
-    protected void takeStill() {
+    private void takeStill() {
         captureState = CaptureState.STILL;
     }
 
-    protected void takeContinuous() {
+    private void takeContinuous() {
         if (captureState == CaptureState.OFF) {
             takeStillButton.setEnabled(false);
             takeContinuousButton.setText("Stop");
@@ -280,7 +267,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
 
-    protected void createCameraPreview() {
+    private void createCameraPreview() {
         //int imageFormat = ImageFormat.NV21; not supported
         //int imageFormat = ImageFormat.RGB_565; not supported
         int imageFormat = ImageFormat.YUV_420_888;
@@ -288,10 +275,8 @@ public class HueMatcherActivity extends AppCompatActivity {
         try {
             CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-            Size[] jpegSizes = null;
-            if (characteristics != null) {
-                jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(imageFormat);
-            }
+            Size[] jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(imageFormat);
+
             // choose the smallest resolution size, for speed
             Size sizeToUse = null;
             if (jpegSizes != null) {
@@ -348,12 +333,14 @@ public class HueMatcherActivity extends AppCompatActivity {
                                 " color = " + colorAndBrightness.color + ", brightness= " + colorAndBrightness.brightness;
                         Log.i("HueMatcher", message);
                         if (captureState == CaptureState.STILL) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(HueMatcherActivity.this, message, Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            if (DEBUG) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(HueMatcherActivity.this, message, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
                         }
 
                         final int adjustedBrightness = Math.min(HueUtils.BRIGHTNESS_MAX, (int) (1.0 * colorAndBrightness.brightness / brightnessScale * HueUtils.BRIGHTNESS_MAX));
@@ -367,7 +354,6 @@ public class HueMatcherActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 sampleView.setBackgroundColor(colorAndBrightness.color);
-
                                 brightnessView.setText("" + adjustedBrightness);
                             }
                         });
@@ -409,7 +395,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                 }
             }, null);
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error creating camera preview", e);
         }
     }
 
@@ -434,23 +420,19 @@ public class HueMatcherActivity extends AppCompatActivity {
             }
             manager.openCamera(cameraId, stateCallback, null);
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Can't open camera", e);
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
         }
         Log.e(TAG, "openCamera X");
     }
 
-    protected void updatePreview() {
+    private void updatePreview() {
         if (null == cameraDevice) {
             Log.e(TAG, "updatePreview error, return");
         }
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
-        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-//        String cameraId = manager.getCameraIdList()[0];
 
 
         try {
@@ -458,6 +440,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
+                    Log.i("Camera2", "capture completed");
                 }
 
                 @Override
@@ -474,7 +457,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             }, mBackgroundHandler);
 
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Can't open camera preview", e);
         }
     }
 
@@ -560,7 +543,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
             // To validate your lightstate is valid (before sending to the bridge) you can use:
             // String validState = lightState.validateState();
-
+            lightState.setTransitionTime(0);
             if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT) {
                 float[] xy = HueUtils.colorToXY(colorAndBrightness.color, light);
                 lightState.setX(xy[0]);
@@ -573,11 +556,17 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     // If you want to handle the response from the bridge, create a PHLightListener object.
-    PHLightListener listener = new PHLightListener() {
+    private final PHLightListener listener = new PHLightListener() {
 
         @Override
         public void onSuccess() {
-            Toast.makeText(HueMatcherActivity.this, "Light success", Toast.LENGTH_SHORT).show();
+            if (!DEBUG) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(HueMatcherActivity.this, "Light success", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
         @Override
@@ -592,6 +581,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                 builder.append(each.getAddress() + ":" + each.getCode() + "-" + each.getMessage());
             }
             Log.w(TAG, "Light has updated: " + builder.toString());
+            if (!DEBUG) return;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -607,6 +597,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                 return;
             }
             Log.e(TAG, "Received light error:" + arg0 + "-" + arg1);
+            if (!DEBUG) return;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -617,6 +608,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         @Override
         public void onReceivingLightDetails(PHLight arg0) {
+            if (!DEBUG) return;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -627,6 +619,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         @Override
         public void onReceivingLights(List<PHBridgeResource> arg0) {
+            if (!DEBUG) return;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -637,6 +630,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         @Override
         public void onSearchComplete() {
+            if (!DEBUG) return;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -682,7 +676,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                 // coordinate.
                 int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                 //noinspection ConstantConditions
-                mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                int mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 boolean swappedDimensions = false;
                 switch (displayRotation) {
                     case Surface.ROTATION_0:
@@ -709,9 +703,13 @@ public class HueMatcherActivity extends AppCompatActivity {
                 int maxPreviewHeight = displaySize.y;
 
                 if (swappedDimensions) {
+                    //noinspection SuspiciousNameCombination
                     rotatedPreviewWidth = height;
+                    //noinspection SuspiciousNameCombination
                     rotatedPreviewHeight = width;
+                    //noinspection SuspiciousNameCombination
                     maxPreviewWidth = displaySize.y;
+                    //noinspection SuspiciousNameCombination
                     maxPreviewHeight = displaySize.x;
                 }
 
@@ -741,14 +739,14 @@ public class HueMatcherActivity extends AppCompatActivity {
                 }
 
                 // Check if the flash is supported.
-                Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+                //Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                 //mFlashSupported = available == null ? false : available;
 
                 //mCameraId = cameraId;
                 return;
             }
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Can't set camera outputs", e);
         } catch (NullPointerException e) {
             // Currently an NPE is thrown when the Camera2API is used but not supported on the
             // device this code runs.
@@ -759,11 +757,10 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
-        Activity activity = this;
-        if (null == textureView || null == mPreviewSize || null == activity) {
+        if (null == textureView || null == mPreviewSize) {
             return;
         }
-        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
         RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
@@ -783,60 +780,6 @@ public class HueMatcherActivity extends AppCompatActivity {
         textureView.setTransform(matrix);
     }
 
-//    private void setupCamera(int width, int height) {
-//        CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-//        try {
-//            for(String cameraId : cameraManager.getCameraIdList()){
-//                CameraCharacteristics cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId);
-//                if(cameraCharacteristics.get(CameraCharacteristics.LENS_FACING) ==
-//                        CameraCharacteristics.LENS_FACING_FRONT){
-//                    continue;
-//                }
-//                StreamConfigurationMap map = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-//                int deviceOrientation = getWindowManager().getDefaultDisplay().getRotation();
-//                mTotalRotation = sensorToDeviceRotation(cameraCharacteristics, deviceOrientation);
-//                boolean swapRotation = mTotalRotation == 90 || mTotalRotation == 270;
-//                int rotatedWidth = width;
-//                int rotatedHeight = height;
-//                if(swapRotation) {
-//                    rotatedWidth = height;
-//                    rotatedHeight = width;
-//                }
-//                mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedWidth, rotatedHeight);
-//                mVideoSize = chooseOptimalSize(map.getOutputSizes(MediaRecorder.class), rotatedWidth, rotatedHeight);
-//                mImageSize = chooseOptimalSize(map.getOutputSizes(ImageFormat.JPEG), rotatedWidth, rotatedHeight);
-//                mImageReader = ImageReader.newInstance(mImageSize.getWidth(), mImageSize.getHeight(), ImageFormat.JPEG, 1);
-//                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
-//                mCameraId = cameraId;
-//                return;
-//            }
-//        } catch (CameraAccessException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//    private void transformImage(int width, int height) {
-//        if(mPreviewSize == null || textureView == null) {
-//            return;
-//        }
-//        Matrix matrix = new Matrix();
-//        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-//        RectF textureRectF = new RectF(0, 0, width, height);
-//        RectF previewRectF = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
-//        float centerX = textureRectF.centerX();
-//        float centerY = textureRectF.centerY();
-//        if(rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
-//            previewRectF.offset(centerX - previewRectF.centerX(),
-//                    centerY - previewRectF.centerY());
-//            matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL);
-//            float scale = Math.max((float)width / mPreviewSize.getWidth(),
-//                    (float)height / mPreviewSize.getHeight());
-//            matrix.postScale(scale, scale, centerX, centerY);
-//            matrix.postRotate(90 * (rotation - 2), centerX, centerY);
-//        }
-//        textureView.setTransform(matrix);
-//    }
-
-
     /**
      * Shows an error message dialog.
      */
@@ -853,7 +796,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
 
         @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
+        public Dialog onCreateDialog(@NonNull Bundle savedInstanceState) {
             final Activity activity = getActivity();
             return new AlertDialog.Builder(activity)
                     .setMessage(getArguments().getString(ARG_MESSAGE))
