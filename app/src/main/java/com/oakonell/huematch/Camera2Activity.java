@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -36,6 +37,14 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.philips.lighting.hue.listener.PHLightListener;
+import com.philips.lighting.hue.sdk.PHHueSDK;
+import com.philips.lighting.model.PHBridge;
+import com.philips.lighting.model.PHBridgeResource;
+import com.philips.lighting.model.PHHueError;
+import com.philips.lighting.model.PHLight;
+import com.philips.lighting.model.PHLightState;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -45,6 +54,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -85,13 +95,16 @@ public class Camera2Activity extends AppCompatActivity {
     SeekBar brightnessSeekbar;
 
     int brightnessScale = 255;
+    private PHHueSDK phHueSDK;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera2);
+        phHueSDK = PHHueSDK.create();
+
+
         textureView = (TextureView) findViewById(R.id.texture);
-        assert textureView != null;
         textureView.setSurfaceTextureListener(textureListener);
         takePictureButton = (Button) findViewById(R.id.btn_takepicture);
 
@@ -232,7 +245,6 @@ public class Camera2Activity extends AppCompatActivity {
             // Orientation
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-            final File file = new File(Environment.getExternalStorageDirectory() + "/pic.jpg");
             final long start = System.nanoTime();
 
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
@@ -246,11 +258,26 @@ public class Camera2Activity extends AppCompatActivity {
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
-                        save(bytes);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+
+                        long start = System.nanoTime();
+                        Bitmap picture = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        long byteToBitmapTime = System.nanoTime() - start;
+
+                        start = System.nanoTime();
+                        final ImageUtils.ColorAndBrightness colorAndBrightness = ImageUtils.getDominantColor(picture);
+                        long statExtractTime = System.nanoTime() - start;
+
+                        final String message = "Picture take time: " + TimeUnit.NANOSECONDS.toMillis(picTime) + "ms, Byte conversion: " + TimeUnit.NANOSECONDS.toMillis(byteToBitmapTime)
+                                + "ms, stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---  color = " + colorAndBrightness.color + ", brightness= " + colorAndBrightness.brightness;
+                        Log.i("HueMatcher", message);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(Camera2Activity.this, message, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                        setLightsTo(colorAndBrightness);
                     } finally {
                         if (image != null) {
                             image.close();
@@ -258,24 +285,13 @@ public class Camera2Activity extends AppCompatActivity {
                     }
                 }
 
-                private void save(byte[] bytes) throws IOException {
-                    OutputStream output = null;
-                    try {
-                        output = new FileOutputStream(file);
-                        output.write(bytes);
-                    } finally {
-                        if (null != output) {
-                            output.close();
-                        }
-                    }
-                }
+
             };
             reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
             final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    Toast.makeText(Camera2Activity.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
                     createCameraPreview();
                 }
             };
@@ -524,4 +540,113 @@ public class Camera2Activity extends AppCompatActivity {
         stopBackgroundThread();
         super.onPause();
     }
+
+    @Override
+    protected void onDestroy() {
+        PHBridge bridge = phHueSDK.getSelectedBridge();
+        if (bridge != null) {
+
+            if (phHueSDK.isHeartbeatEnabled(bridge)) {
+                phHueSDK.disableHeartbeat(bridge);
+            }
+
+            phHueSDK.disconnect(bridge);
+            super.onDestroy();
+        }
+    }
+
+    private void setLightsTo(ImageUtils.ColorAndBrightness colorAndBrightness) {
+        PHBridge bridge = phHueSDK.getSelectedBridge();
+        List<PHLight> allLights = bridge.getResourceCache().getAllLights();
+//        Random rand = new Random();
+        for (PHLight light : allLights) {
+            PHLightState lightState = new PHLightState();
+//            lightState.setBrightness(rand.nextInt(BRIGHTNESS_MAX));
+
+//            if (light.getLightType() == PHLight.PHLightType.DIM_LIGHT) {
+            if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT ||
+                    light.getLightType() == PHLight.PHLightType.DIM_LIGHT || light.getLightType() == PHLight.PHLightType.CT_LIGHT) {
+                lightState.setBrightness(colorAndBrightness.brightness);
+            }
+            // To validate your lightstate is valid (before sending to the bridge) you can use:
+            // String validState = lightState.validateState();
+//            }
+            if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT) {
+                float[] xy = HueUtils.colorToXY(colorAndBrightness.color, light);
+                lightState.setX(xy[0]);
+                lightState.setY(xy[1]);
+            }
+            bridge.updateLightState(light, lightState, listener);
+            //  bridge.updateLightState(light, lightState);   // If no bridge response is required then use this simpler form.
+        }
+
+    }
+
+    // If you want to handle the response from the bridge, create a PHLightListener object.
+    PHLightListener listener = new PHLightListener() {
+
+        @Override
+        public void onSuccess() {
+            Toast.makeText(Camera2Activity.this, "Light success", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onStateUpdate(Map<String, String> arg0, List<PHHueError> arg1) {
+//            StringBuilder builder = new StringBuilder();
+//            builder.append(arg0);
+
+            Log.w(TAG, "Light has updated");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(Camera2Activity.this, "Light updated", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @Override
+        public void onError(final int arg0, final String arg1) {
+            if (arg0 == 42) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(Camera2Activity.this, "Light error: " + arg0 + " - " + arg1, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        }
+
+        @Override
+        public void onReceivingLightDetails(PHLight arg0) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(Camera2Activity.this, "Light details", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        }
+
+        @Override
+        public void onReceivingLights(List<PHBridgeResource> arg0) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(Camera2Activity.this, "Lights received", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        }
+
+        @Override
+        public void onSearchComplete() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(Camera2Activity.this, "Light search", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        }
+    };
 }

@@ -70,8 +70,14 @@ public class ImageUtils {
             }
         }
 
-        return new ColorAndBrightness(Color.argb(
-                (hasAlpha) ? (alphaBucket / pixelCount) : 255,
+//        return new ColorAndBrightness(Color.argb(
+//                (hasAlpha) ? (alphaBucket / pixelCount) : 255,
+//                redBucket / pixelCount,
+//                greenBucket / pixelCount,
+//                blueBucket / pixelCount),
+//                (redBucket + greenBucket + blueBucket) / (3 * pixelCount)
+//        );
+        return new ColorAndBrightness(Color.rgb(
                 redBucket / pixelCount,
                 greenBucket / pixelCount,
                 blueBucket / pixelCount),
