@@ -1,7 +1,10 @@
 package com.oakonell.huematch;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -49,6 +52,13 @@ public class ControlledLightsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_controlled_lights);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        if(NavUtils.getParentActivityName(this) != null) {
+            ActionBar actionBar = this.getSupportActionBar();
+            if(actionBar != null) {
+                actionBar.setDisplayHomeAsUpEnabled(true);
+            }
+        }
 
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
@@ -155,13 +165,11 @@ public class ControlledLightsActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // TODO menu ?  (at least 'about'?)
 //            case R.id.action_settings:
-//                Intent intent = new Intent(getApplicationContext(), ControlledLightsActivity.class);
-//                startActivity(intent);
+//                launchLightChooser();
 //                break;
         }
-        return true;
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

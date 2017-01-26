@@ -3,6 +3,11 @@
     package="com.oakonell.huematch">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera2"
+        android:required="true" />
 
     <application
         android:name=".HueMatcherApp"
@@ -11,30 +16,38 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="74ae3579d71c997859cbe007cec110297e81aa2a" />
+
+
         <activity
             android:name=".PHHomeActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".PHPushlinkActivity"
             android:label="@string/app_name" />
         <activity
             android:name=".HueMatcherActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ControlledLightsActivity"
             android:label="@string/title_activity_controlled_lights"
+            android:parentActivityName=".HueMatcherActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
-        <meta-data
-            android:name="io.fabric.ApiKey"
-            android:value="74ae3579d71c997859cbe007cec110297e81aa2a" />
+        <activity
+            android:name=".AboutActivity"
+            android:parentActivityName=".HueMatcherActivity"
+            android:theme="@style/AppTheme.MaterialAboutActivity" />
 
     </application>
 

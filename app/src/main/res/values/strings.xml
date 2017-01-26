@@ -126,4 +126,7 @@
     <string name="image_access_bulb_type">Bulb Type</string>
     <string name="image_access_sample_still">Sample Still</string>
     <string name="image_access_sample_continuous">Sample Continuously</string>
+    <string name="author">Author</string>
+    <string name="about_visit_web">Visit Website</string>
+    <string name="about_rate_app">Rate this app</string>
 </resources>

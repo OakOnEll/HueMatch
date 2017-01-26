@@ -1053,8 +1053,12 @@ public class HueMatcherActivity extends AppCompatActivity {
             case R.id.action_settings:
                 launchLightChooser();
                 break;
+            case R.id.action_about:
+                Intent intent = new Intent(this, AboutActivity.class);
+                startActivity(intent);
+                break;
         }
-        return true;
+        return super.onOptionsItemSelected(item);
     }
 
     @DebugLog
