@@ -1,5 +1,6 @@
 package com.oakonell.huematch;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -19,11 +20,6 @@ public class HueSharedPreferences {
 
     private Editor mSharedPreferencesEditor = null;
 
-
-    public void create() {
-
-    }
-
     public static HueSharedPreferences getInstance(Context ctx) {
         if (instance == null) {
             instance = new HueSharedPreferences(ctx);
@@ -31,6 +27,7 @@ public class HueSharedPreferences {
         return instance;
     }
 
+    @SuppressLint("CommitPrefEdits")
     private HueSharedPreferences(Context appContext) {
         mSharedPreferences = appContext.getSharedPreferences(HUE_SHARED_PREFERENCES_STORE, 0); // 0 - for private mode
         mSharedPreferencesEditor = mSharedPreferences.edit();
@@ -38,8 +35,7 @@ public class HueSharedPreferences {
 
 
     public String getUsername() {
-        String username = mSharedPreferences.getString(LAST_CONNECTED_USERNAME, "");
-        return username;
+        return mSharedPreferences.getString(LAST_CONNECTED_USERNAME, "");
     }
 
     public boolean setUsername(String username) {

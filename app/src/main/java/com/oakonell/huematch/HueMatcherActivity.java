@@ -1,6 +1,7 @@
 package com.oakonell.huematch;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -292,7 +293,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             mBackgroundThread = null;
             mBackgroundHandler = null;
         } catch (InterruptedException e) {
-            Log.e(TAG, "Interupted while joining to background thread", e);
+            Log.e(TAG, "Interrupted while joining to background thread", e);
         }
     }
 
@@ -312,6 +313,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         // assure that at least one light is reachable/on
         Collection<PHLight> offLights = new HashSet<>();
         Collection<PHLight> unreachableLights = new HashSet<>();
+        // TODO more stringent light access check, make sure at least one OK light
         Collection<PHLight> okLights = new HashSet<>();
 
         StringBuilder offLightsBuilder = new StringBuilder();
@@ -471,7 +473,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                         final String message = "Picture take time: " + TimeUnit.NANOSECONDS.toMillis(picTime) + "ms" +
                                 ", BitMap retrieval time: " + TimeUnit.NANOSECONDS.toMillis(bitmapTime) + "ms, " +
                                 "stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---" +
-                                " color = " + colorAndBrightness.color + ", brightness= " + colorAndBrightness.brightness;
+                                " color = " + colorAndBrightness.getColor() + ", brightness= " + colorAndBrightness.getBrightness();
                         Log.i("HueMatcher", message);
                         if (captureState == CaptureState.STILL) {
                             if (DEBUG) {
@@ -484,18 +486,18 @@ public class HueMatcherActivity extends AppCompatActivity {
                             }
                         }
 
-                        final int adjustedBrightness = Math.min(HueUtils.BRIGHTNESS_MAX, (int) (1.0 * colorAndBrightness.brightness / brightnessScale * HueUtils.BRIGHTNESS_MAX));
-
-                        colorAndBrightness.brightness = adjustedBrightness;
+                        final int adjustedBrightness = Math.min(HueUtils.BRIGHTNESS_MAX, (int) (1.0 * colorAndBrightness.getBrightness() / brightnessScale * HueUtils.BRIGHTNESS_MAX));
+                        final ImageUtils.ColorAndBrightness adjustedColorAndBrightness = new ImageUtils.ColorAndBrightness(colorAndBrightness.getColor(), adjustedBrightness);
                         if (captureState != CaptureState.OFF) {
-                            setLightsTo(colorAndBrightness);
+                            setLightsTo(adjustedColorAndBrightness);
                         }
 
                         runOnUiThread(new Runnable() {
+                            @SuppressLint("SetTextI18n")
                             @Override
                             public void run() {
-                                sampleView.setBackgroundColor(colorAndBrightness.color);
-                                brightnessView.setText("" + adjustedBrightness);
+                                sampleView.setBackgroundColor(adjustedColorAndBrightness.getColor());
+                                brightnessView.setText(Integer.toString(adjustedColorAndBrightness.getBrightness()));
                             }
                         });
                     } finally {
@@ -703,14 +705,14 @@ public class HueMatcherActivity extends AppCompatActivity {
 
             if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT ||
                     light.getLightType() == PHLight.PHLightType.DIM_LIGHT || light.getLightType() == PHLight.PHLightType.CT_LIGHT) {
-                lightState.setBrightness(colorAndBrightness.brightness);
+                lightState.setBrightness(colorAndBrightness.getBrightness());
             }
 
             // To validate your lightstate is valid (before sending to the bridge) you can use:
             // String validState = lightState.validateState();
             lightState.setTransitionTime(0);
             if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT) {
-                float[] xy = HueUtils.colorToXY(colorAndBrightness.color, light);
+                float[] xy = HueUtils.colorToXY(colorAndBrightness.getColor(), light);
                 lightState.setX(xy[0]);
                 lightState.setY(xy[1]);
             }
@@ -739,11 +741,11 @@ public class HueMatcherActivity extends AppCompatActivity {
             StringBuilder builder = new StringBuilder("Updated lights:");
             for (Map.Entry<String, String> entry : arg0.entrySet()) {
                 builder.append("\n");
-                builder.append(entry.getKey() + "," + entry.getValue());
+                builder.append(entry.getKey()).append(",").append(entry.getValue());
             }
             for (PHHueError each : arg1) {
                 builder.append("\n\t");
-                builder.append(each.getAddress() + ":" + each.getCode() + "-" + each.getMessage());
+                builder.append(each.getAddress()).append(":").append(each.getCode()).append("-").append(each.getMessage());
             }
             Log.w(TAG, "Light has updated: " + builder.toString());
             if (!DEBUG) return;
@@ -962,6 +964,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             return dialog;
         }
 
+        @NonNull
         @Override
         public Dialog onCreateDialog(@NonNull Bundle savedInstanceState) {
             final Activity activity = getActivity();
@@ -993,6 +996,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             return dialog;
         }
 
+        @NonNull
         @Override
         public Dialog onCreateDialog(@NonNull Bundle savedInstanceState) {
             final HueMatcherActivity activity = (HueMatcherActivity) getActivity();
@@ -1014,7 +1018,6 @@ public class HueMatcherActivity extends AppCompatActivity {
                                 return;
                             }
                             activity.takeContinuous(true);
-                            return;
                         }
                     })
                     .setNegativeButton(R.string.btn_cancel, new DialogInterface.OnClickListener() {

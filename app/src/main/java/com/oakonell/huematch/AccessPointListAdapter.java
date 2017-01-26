@@ -19,7 +19,7 @@ import java.util.List;
  * @author SteveyO.
  */
 public class AccessPointListAdapter extends BaseAdapter {
-    private LayoutInflater mInflater;
+    private final LayoutInflater mInflater;
     private List<PHAccessPoint> accessPoints;
 
     /**

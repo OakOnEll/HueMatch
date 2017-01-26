@@ -7,8 +7,8 @@
     <string name="btn_refresh">Refresh</string>
     <string name="btn_find_bridge">Find new bridge</string>
     <string name="btn_random">Random Lights</string>
-    <string name="search_progress">Searching ...</string>
-    <string name="connecting">Connecting ...</string>
+    <string name="search_progress">Searching …</string>
+    <string name="connecting">Connecting …</string>
     <string name="btn_ok">OK</string>
     <string name="btn_cancel">Cancel</string>
     <string name="txt_could_not_connect">No connection</string>
@@ -123,4 +123,7 @@
     <string name="title_activity_test">TestActivity</string>
     <string name="light_issues_dialog">Light Issues</string>
     <string name="camera_timeout">HueMatcher: Timeout while acquiring the camera.</string>
+    <string name="image_access_bulb_type">Bulb Type</string>
+    <string name="image_access_sample_still">Sample Still</string>
+    <string name="image_access_sample_continuous">Sample Continuously</string>
 </resources>

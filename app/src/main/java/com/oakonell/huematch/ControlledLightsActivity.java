@@ -32,8 +32,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class ControlledLightsActivity extends AppCompatActivity {
+    @SuppressWarnings("FieldCanBeLocal")
     private final String TAG = "ControlledLights";
 
+    @SuppressWarnings("FieldCanBeLocal")
     private RecyclerView lightsListView;
 
     private PHHueSDK phHueSDK;
@@ -69,7 +71,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // save checked lights to prefs
-                Set<String> result = new HashSet<String>();
+                Set<String> result = new HashSet<>();
                 for (LightOrRoom each : lightsAdapter.list) {
                     if (each.getType() == Type.ROOM) continue;
                     Light light = (Light) each;
@@ -153,6 +155,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            // TODO menu ?  (at least 'about'?)
 //            case R.id.action_settings:
 //                Intent intent = new Intent(getApplicationContext(), ControlledLightsActivity.class);
 //                startActivity(intent);

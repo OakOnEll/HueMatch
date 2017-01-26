@@ -33,12 +33,14 @@
             android:id="@+id/btn_takepicture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/image_access_sample_still"
             android:src="@drawable/camera" />
 
         <ImageButton
             android:id="@+id/btn_takepreview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/image_access_sample_continuous"
             android:src="@drawable/video" />
 
         <View
@@ -51,6 +53,7 @@
             android:id="@+id/brightness"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minEms="3"
             tools:text="255" />
 
 
@@ -61,10 +64,10 @@
 
         <SeekBar
             android:id="@+id/seekBar"
-            android:minWidth="150dp"
             android:layout_width="match_parent"
             android:layout_height="32dp"
-            android:max="255" />
+            android:max="255"
+            android:minWidth="150dp" />
 
 
     </LinearLayout>

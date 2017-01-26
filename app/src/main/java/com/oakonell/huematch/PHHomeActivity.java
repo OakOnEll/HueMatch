@@ -38,9 +38,9 @@ import io.fabric.sdk.android.Fabric;
  * For explanation on key concepts visit: https://github.com/PhilipsHue/PhilipsHueSDK-Java-MultiPlatform-Android
  */
 public class PHHomeActivity extends Activity implements OnItemClickListener {
+    private static final String TAG = "QuickStart";
 
     private PHHueSDK phHueSDK;
-    public static final String TAG = "QuickStart";
     private HueSharedPreferences prefs;
     private AccessPointListAdapter adapter;
 
@@ -98,7 +98,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
 
 
     // Local SDK Listener
-    private PHSDKListener listener = new PHSDKListener() {
+    private final PHSDKListener listener = new PHSDKListener() {
 
         @Override
         public void onAccessPointsFound(List<PHAccessPoint> accessPoint) {

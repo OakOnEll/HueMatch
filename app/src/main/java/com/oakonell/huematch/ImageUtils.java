@@ -16,7 +16,7 @@ import java.util.List;
 
 public class ImageUtils {
     @SuppressWarnings("FieldCanBeLocal")
-    private static String TAG = "ImageUtils";
+    private static final String TAG = "ImageUtils";
     private static final int NO_IMAGE_BRIGHTNESS = 0;
 
     /**
@@ -46,7 +46,7 @@ public class ImageUtils {
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
     public static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
-                                          int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
+                                         int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<>();
@@ -159,12 +159,20 @@ public class ImageUtils {
     }
 
     public static class ColorAndBrightness {
-        int color;
-        int brightness;
+        private final int color;
+        private final int brightness;
 
         public ColorAndBrightness(int color, int brightness) {
             this.color = color;
             this.brightness = brightness;
+        }
+
+        public int getColor() {
+            return color;
+        }
+
+        public int getBrightness() {
+            return brightness;
         }
     }
 

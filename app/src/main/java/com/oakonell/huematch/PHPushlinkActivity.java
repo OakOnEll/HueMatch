@@ -56,7 +56,7 @@ public class PHPushlinkActivity extends Activity {
         pbar.incrementProgressBy(1);
     }
 
-    private PHSDKListener listener = new PHSDKListener() {
+    private final PHSDKListener listener = new PHSDKListener() {
 
         @Override
         public void onAccessPointsFound(List<PHAccessPoint> arg0) {}
