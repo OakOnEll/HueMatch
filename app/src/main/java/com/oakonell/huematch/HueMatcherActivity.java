@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -28,19 +29,26 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.PersistableBundle;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.Size;
-import android.util.SparseIntArray;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,12 +63,16 @@ import com.philips.lighting.model.PHLight;
 import com.philips.lighting.model.PHLightState;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import hugo.weaving.DebugLog;
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -71,6 +83,8 @@ public class HueMatcherActivity extends AppCompatActivity {
     private static final String TAG = "HueMatcherActivity";
 
     private static final java.lang.String BRIGHTNESS_SCALE_SAVE_KEY = "brightnessScale";
+    private static final java.lang.String IS_CONTINUOUS_SAVE_KEY = "continuous";
+
 
     private static final String FRAGMENT_DIALOG = "dialog";
 
@@ -78,6 +92,9 @@ public class HueMatcherActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private static final boolean DEBUG = false;
     private Size mPreviewSize;
+    private HueSharedPreferences prefs;
+    private Set<String> controlledIds;
+    private boolean autostartContinuous;
 
     enum CaptureState {
         OFF, STILL, CONTINUOUS
@@ -96,8 +113,8 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private Size imageDimension;
 
-    private Button takeStillButton;
-    private Button takeContinuousButton;
+    private ImageButton takeStillButton;
+    private ImageButton takeContinuousButton;
 
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
@@ -116,18 +133,45 @@ public class HueMatcherActivity extends AppCompatActivity {
     private long start;
 
     @Override
+    @DebugLog
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_hue_matcher);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+//                        .detectDiskReads()
+                    .penaltyLog()
+                    .penaltyFlashScreen()
+                    .build());
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                    .detectAll()
+//                        .detectLeakedSqlLiteObjects()
+//                        .detectLeakedClosableObjects()
+                    .penaltyLog()
+                    .build());
+        }
+
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
 
         Fabric.with(this, new Crashlytics());
-        setContentView(R.layout.activity_camera2);
         phHueSDK = PHHueSDK.create();
 
         textureView = (AutoFitTextureView) findViewById(R.id.texture);
         textureView.setSurfaceTextureListener(textureListener);
 
-        takeStillButton = (Button) findViewById(R.id.btn_takepicture);
-        takeContinuousButton = (Button) findViewById(R.id.btn_takepreview);
+        takeStillButton = (ImageButton) findViewById(R.id.btn_takepicture);
+        takeContinuousButton = (ImageButton) findViewById(R.id.btn_takepreview);
 
         sampleView = findViewById(R.id.sample);
 
@@ -156,22 +200,30 @@ public class HueMatcherActivity extends AppCompatActivity {
         if (savedInstanceState != null) {
             brightnessScale = savedInstanceState.getInt(BRIGHTNESS_SCALE_SAVE_KEY, HueUtils.BRIGHTNESS_MAX);
             brightnessSeekbar.setProgress(brightnessScale);
+
+            // startContinuous on init after camera is running, and after prefs is assigned to get controlledIds
+            if (savedInstanceState.getBoolean(IS_CONTINUOUS_SAVE_KEY, false)) {
+                autostartContinuous = true;
+            }
         }
 
 
         takeStillButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                takeStill();
+                takeStill(false);
             }
         });
 
         takeContinuousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                takeContinuous();
+                takeContinuous(false);
             }
         });
+
+        prefs = HueSharedPreferences.getInstance(getApplicationContext());
+
     }
 
     private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
@@ -229,12 +281,14 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     };
 
+    @DebugLog
     private void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("Camera Background");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
 
+    @DebugLog
     private void stopBackgroundThread() {
         mBackgroundThread.quitSafely();
         try {
@@ -246,32 +300,123 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     }
 
-    private void takeStill() {
+    @DebugLog
+    private void takeStill(boolean force) {
+        if (!checkLightsForCapture(force, CaptureState.STILL)) return;
         captureState = CaptureState.STILL;
     }
 
-    private void takeContinuous() {
+    @DebugLog
+    private boolean checkLightsForCapture(boolean force, CaptureState captureType) {
+        PHBridge bridge = phHueSDK.getSelectedBridge();
+        Map<String, PHLight> lightsMap = bridge.getResourceCache().getLights();
+
+        // accumulate lights off, prompt to turn on
+        // accumulate unreachable lights
+        // assure that at least one light is reachable/on
+        Collection<PHLight> offLights = new HashSet<>();
+        Collection<PHLight> unreachableLights = new HashSet<>();
+        Collection<PHLight> okLights = new HashSet<>();
+
+        StringBuilder offLightsBuilder = new StringBuilder();
+        StringBuilder unreachableLightsBuilder = new StringBuilder();
+
+
+        for (String id : controlledIds) {
+            PHLight light = lightsMap.get(id);
+            final PHLightState state = light.getLastKnownLightState();
+//            bridge.updateLight(light, new PHLightListener() {
+//                @Override
+//                public void onReceivingLightDetails(PHLight phLight) {
+//
+//                }
+//
+//                @Override
+//                public void onReceivingLights(List<PHBridgeResource> list) {
+//
+//                }
+//
+//                @Override
+//                public void onSearchComplete() {
+//
+//                }
+//
+//                @Override
+//                public void onSuccess() {
+//
+//                }
+//
+//                @Override
+//                public void onError(int i, String s) {
+//
+//                }
+//
+//                @Override
+//                public void onStateUpdate(Map<String, String> map, List<PHHueError> list) {
+//
+//                }
+//            });
+            if (!state.isOn()) {
+                if (!offLights.isEmpty()) {
+                    offLightsBuilder.append(", ");
+                }
+                offLightsBuilder.append(light.getName());
+                offLights.add(light);
+            } else if (!state.isReachable()) {
+                if (!unreachableLights.isEmpty()) {
+                    unreachableLightsBuilder.append(", ");
+                }
+                unreachableLightsBuilder.append(light.getName());
+                unreachableLights.add(light);
+            } else {
+                okLights.add(light);
+            }
+        }
+        if (force && !offLights.isEmpty()) {
+            for (PHLight each : offLights) {
+                PHLightState state = new PHLightState();
+                state.setOn(true);
+                // TODO listen to the state update..
+                bridge.updateLightState(each, state);
+            }
+            offLights.clear();
+        }
+        if (!force && !unreachableLights.isEmpty() || !offLights.isEmpty()) {
+            final SomeLightsOffDialog dialog = SomeLightsOffDialog.newInstance("Some lights are off(" + offLightsBuilder.toString() + ") or unreachable(" + unreachableLightsBuilder.toString() + ")\n" + "Turn on lights, and ignore unreachable", captureType);
+            dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
+            return false;
+        }
+        return true;
+    }
+
+    @DebugLog
+    private void takeContinuous(boolean force) {
         if (captureState == CaptureState.OFF) {
-            takeStillButton.setEnabled(false);
-            takeContinuousButton.setText("Stop");
-            captureState = CaptureState.CONTINUOUS;
-            // keep screen on
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            startContinuous(force);
         } else {
             captureState = CaptureState.OFF;
             takeStillButton.setEnabled(true);
-            takeContinuousButton.setText("Continuous");
+            takeContinuousButton.setImageResource(R.drawable.video);
+
             // allow screen to turn off
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
+    @DebugLog
+    private void startContinuous(boolean force) {
+        if (!checkLightsForCapture(force, CaptureState.CONTINUOUS)) return;
+        takeStillButton.setEnabled(false);
+        takeContinuousButton.setImageResource(R.drawable.stop_video);
+        captureState = CaptureState.CONTINUOUS;
+        // keep screen on
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
+
+    @DebugLog
     private void createCameraPreview() {
-        //int imageFormat = ImageFormat.NV21; not supported
-        //int imageFormat = ImageFormat.RGB_565; not supported
         int imageFormat = ImageFormat.YUV_420_888;
-        //int imageFormat = ImageFormat.JPEG;
         try {
             CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
@@ -387,6 +532,9 @@ public class HueMatcherActivity extends AppCompatActivity {
                     // When the session is ready, we start displaying the preview.
                     cameraCaptureSessions = cameraCaptureSession;
                     updatePreview();
+                    if (autostartContinuous) {
+                        startContinuous(false);
+                    }
                 }
 
                 @Override
@@ -399,6 +547,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     }
 
+    @DebugLog
     private void openCamera(int width, int height) {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         Log.e(TAG, "is camera open");
@@ -416,7 +565,8 @@ public class HueMatcherActivity extends AppCompatActivity {
                 return;
             }
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
-                throw new RuntimeException("Time out waiting to lock camera opening.");
+                Toast.makeText(this, R.string.camera_timeout, Toast.LENGTH_LONG).show();
+                finish();
             }
             manager.openCamera(cameraId, stateCallback, null);
         } catch (CameraAccessException e) {
@@ -427,6 +577,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         Log.e(TAG, "openCamera X");
     }
 
+    @DebugLog
     private void updatePreview() {
         if (null == cameraDevice) {
             Log.e(TAG, "updatePreview error, return");
@@ -461,6 +612,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     }
 
+    @DebugLog
     private void closeCamera() {
         try {
             mCameraOpenCloseLock.acquire();
@@ -485,6 +637,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     @Override
+    @DebugLog
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
@@ -496,9 +649,15 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     @Override
+    @DebugLog
     protected void onResume() {
         super.onResume();
         Log.e(TAG, "onResume");
+        controlledIds = prefs.getControlledLightIds();
+        if (controlledIds.isEmpty()) {
+            launchLightChooser();
+        }
+
         startBackgroundThread();
         if (textureView.isAvailable()) {
             openCamera(textureView.getWidth(), textureView.getHeight());
@@ -508,6 +667,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     @Override
+    @DebugLog
     protected void onPause() {
         Log.e(TAG, "onPause");
         closeCamera();
@@ -516,6 +676,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     @Override
+    @DebugLog
     protected void onDestroy() {
         PHBridge bridge = phHueSDK.getSelectedBridge();
         if (bridge != null) {
@@ -529,17 +690,25 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     }
 
+    @DebugLog
     private void setLightsTo(ImageUtils.ColorAndBrightness colorAndBrightness) {
         PHBridge bridge = phHueSDK.getSelectedBridge();
-        List<PHLight> allLights = bridge.getResourceCache().getAllLights();
-        for (PHLight light : allLights) {
+        Map<String, PHLight> lightsMap = bridge.getResourceCache().getLights();
+
+
+        for (String id : controlledIds) {
+            PHLight light = lightsMap.get(id);
+            if (light == null) {
+                Log.e(TAG, "No light with id '" + id + "' was found!");
+                continue;
+            }
             PHLightState lightState = new PHLightState();
 
 
-//            if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT ||
-//                    light.getLightType() == PHLight.PHLightType.DIM_LIGHT || light.getLightType() == PHLight.PHLightType.CT_LIGHT) {
-//                lightState.setBrightness(colorAndBrightness.brightness);
-//            }
+            if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT ||
+                    light.getLightType() == PHLight.PHLightType.DIM_LIGHT || light.getLightType() == PHLight.PHLightType.CT_LIGHT) {
+                lightState.setBrightness(colorAndBrightness.brightness);
+            }
 
             // To validate your lightstate is valid (before sending to the bridge) you can use:
             // String validState = lightState.validateState();
@@ -647,6 +816,7 @@ public class HueMatcherActivity extends AppCompatActivity {
      * @param width  The width of available size for camera preview
      * @param height The height of available size for camera preview
      */
+    @DebugLog
     private void setUpCameraOutputs(int width, int height) {
         Activity activity = this;
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -756,6 +926,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     }
 
+    @DebugLog
     private void configureTransform(int viewWidth, int viewHeight) {
         if (null == textureView || null == mPreviewSize) {
             return;
@@ -811,4 +982,100 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     }
 
+
+    public static class SomeLightsOffDialog extends DialogFragment {
+
+        private static final String ARG_MESSAGE = "message";
+        private static final String ARG_TYPE = "type";
+
+        public static SomeLightsOffDialog newInstance(String message, CaptureState state) {
+            SomeLightsOffDialog dialog = new SomeLightsOffDialog();
+            Bundle args = new Bundle();
+            args.putString(ARG_MESSAGE, message);
+            args.putString(ARG_TYPE, state.toString());
+            dialog.setArguments(args);
+            return dialog;
+        }
+
+        @Override
+        public Dialog onCreateDialog(@NonNull Bundle savedInstanceState) {
+            final HueMatcherActivity activity = (HueMatcherActivity) getActivity();
+
+            String typeName = getArguments().getString(ARG_TYPE);
+            final String message = getArguments().getString(ARG_MESSAGE);
+
+            final CaptureState type = CaptureState.valueOf(typeName);
+
+            return new AlertDialog.Builder(activity)
+                    .setTitle(R.string.light_issues_dialog)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dismiss();
+                            if (type == CaptureState.STILL) {
+                                activity.takeStill(true);
+                                return;
+                            }
+                            activity.takeContinuous(true);
+                            return;
+                        }
+                    })
+                    .setNegativeButton(R.string.btn_cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dismiss();
+                        }
+                    })
+                    .create();
+        }
+
+    }
+
+    @Override
+    @DebugLog
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.w(TAG, "Inflating home menu");
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_hue_matcher, menu);
+        return true;
+    }
+
+    /**
+     * Called when option is selected.
+     *
+     * @param item the MenuItem object.
+     * @return boolean Return false to allow normal menu processing to proceed,  true to consume it here.
+     */
+    @Override
+    @DebugLog
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                launchLightChooser();
+                break;
+        }
+        return true;
+    }
+
+    @DebugLog
+    private void launchLightChooser() {
+        Intent intent = new Intent(getApplicationContext(), ControlledLightsActivity.class);
+//                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+//                    intent.addFlags(0x8000); // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
+        startActivity(intent);
+    }
+
+
+    @Override
+    @DebugLog
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(BRIGHTNESS_SCALE_SAVE_KEY, brightnessScale);
+        if (captureState == CaptureState.CONTINUOUS) {
+            outState.putBoolean(IS_CONTINUOUS_SAVE_KEY, true);
+        }
+    }
 }

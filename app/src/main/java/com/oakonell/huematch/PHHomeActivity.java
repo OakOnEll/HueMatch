@@ -92,7 +92,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.w(TAG, "Inflating home menu");
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.home, menu);
+        getMenuInflater().inflate(R.menu.menu_home, menu);
         return true;
     }
 
@@ -272,8 +272,6 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
 
     // Starting the main activity this way, prevents the PushLink Activity being shown when pressing the back button.
     public void startMainActivity() {
-        //Intent intent = new Intent(getApplicationContext(), HueExampleActivity.class);
-        //Intent intent = new Intent(getApplicationContext(), HueMatcherActivityOld.class);
         Intent intent = new Intent(getApplicationContext(), HueMatcherActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

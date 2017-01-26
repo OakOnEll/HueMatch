@@ -1,70 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    >
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <com.oakonell.huematch.AutoFitTextureView
         android:id="@+id/texture"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_toLeftOf="@id/buttons" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <LinearLayout
         android:id="@+id/buttons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
+        android:layout_gravity="center"
         android:layout_marginBottom="16dp"
         android:layout_marginTop="16dp"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_takepicture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Still" />
+            android:src="@drawable/camera" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_takepreview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Continuous" />
+            android:src="@drawable/video" />
 
         <View
             android:id="@+id/sample"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:background="@color/colorPrimary" />
+            android:layout_gravity="center_vertical"
+            tools:background="@color/colorPrimary" />
 
         <TextView
+            android:layout_marginLeft="@dimen/text_margin"
             android:id="@+id/brightness"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
             tools:text="255" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/slider"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:orientation="horizontal">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAlignment="textEnd"
             android:text="Brightness Adjustment" />
 
         <SeekBar
             android:id="@+id/seekBar"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="32dp"
+            android:layout_marginBottom="10dp"
+            android:layout_weight="1"
             android:max="255" />
-
 
     </LinearLayout>
 
-</RelativeLayout>
+</LinearLayout>
