@@ -19,13 +19,15 @@
         android:orientation="horizontal">
 
         <TextView
+            style="@android:style/TextAppearance.Material.Large"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="@dimen/text_margin"
-            android:text="Bridge" />
+            android:text="@string/bridge" />
 
         <TextView
             android:id="@+id/bridge_name"
+            style="@android:style/TextAppearance.Material.Large"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:text="Bridge name" />

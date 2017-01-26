@@ -444,6 +444,10 @@ public class HueMatcherActivity extends AppCompatActivity {
             SurfaceTexture texture = textureView.getSurfaceTexture();
             Surface surface = new Surface(texture);
 
+            if (previewReader != null) {
+                previewReader.close();
+                previewReader = null;
+            }
             previewReader = ImageReader.newInstance(width, height, imageFormat, 10);
 
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {

@@ -1,36 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/darker_gray"
     android:orientation="horizontal"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <com.oakonell.huematch.AutoFitTextureView
         android:id="@+id/texture"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_toLeftOf="@id/buttons" />
+        android:layout_weight="4" />
 
     <LinearLayout
         android:id="@+id/buttons"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
+        android:layout_gravity="center_horizontal|center_vertical"
         android:layout_marginBottom="16dp"
         android:layout_marginTop="16dp"
+        android:layout_weight="1"
         android:gravity="center_horizontal"
         android:orientation="vertical">
 
         <ImageButton
             android:id="@+id/btn_takepicture"
+            style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="@string/image_access_sample_still"
@@ -38,6 +35,7 @@
 
         <ImageButton
             android:id="@+id/btn_takepreview"
+            style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="@string/image_access_sample_continuous"
@@ -53,23 +51,32 @@
             android:id="@+id/brightness"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:minEms="3"
             tools:text="255" />
 
 
-        <TextView
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Brightness Adjustment" />
+            android:background="@drawable/view_group"
+            android:orientation="vertical">
 
-        <SeekBar
-            android:id="@+id/seekBar"
-            android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:max="255"
-            android:minWidth="150dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="Brightness Adjustment" />
+
+            <SeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:max="255"
+                android:minWidth="150dp" />
+        </LinearLayout>
 
 
     </LinearLayout>
 
-</RelativeLayout>
+</LinearLayout>

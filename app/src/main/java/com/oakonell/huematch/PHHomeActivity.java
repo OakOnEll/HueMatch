@@ -56,7 +56,7 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
         phHueSDK = PHHueSDK.create();
 
         // Set the Device Name (name of your app). This will be stored in your bridge whitelist entry.
-        phHueSDK.setAppName("QuickStartApp");
+        phHueSDK.setAppName(getApplicationContext().getPackageName());
         phHueSDK.setDeviceName(android.os.Build.MODEL);
 
         // Register the PHSDKListener to receive callbacks from the bridge.

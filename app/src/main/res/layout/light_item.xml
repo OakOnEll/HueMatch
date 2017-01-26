@@ -2,22 +2,25 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="?android:listSelector"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="48dp"
+    android:gravity="center_vertical"
     android:orientation="horizontal">
 
     <CheckBox
         android:id="@+id/checked"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="50dp" />
+        android:layout_marginLeft="74dp"
+        android:layout_marginRight="24dp" />
 
     <ImageView
-        android:contentDescription="@string/image_access_bulb_type"
         android:id="@+id/image"
         android:layout_width="wrap_content"
-
         android:layout_height="wrap_content"
+        android:layout_marginRight="24dp"
+        android:contentDescription="@string/image_access_bulb_type"
         app:srcCompat="@drawable/white_e27" />
 
     <TextView

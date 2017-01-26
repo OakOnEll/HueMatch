@@ -24,7 +24,7 @@
     <string name="txt_selectbridges">Available Access Points</string>
     <string name="txt_pushlink">Pushlink</string>
     <string name="press_pushlink_button">Press the link button on the bridge</string>
-    <string name="txt_select_smartbridge">Please select a bridge to use for this app</string>
+    <string name="txt_select_smartbridge">Please select a Hue bridge to use for this app</string>
     <string name="title_error">Error</string>
     <string name="txt_last_heartbeat">Last Heartbeat : </string>
     <string name="snapshot">Snapshot</string>
@@ -129,4 +129,5 @@
     <string name="author">Author</string>
     <string name="about_visit_web">Visit Website</string>
     <string name="about_rate_app">Rate this app</string>
+    <string name="bridge">Bridge:</string>
 </resources>
