@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/darker_gray"
+    android:background="@android:color/black"
     android:orientation="horizontal"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -25,48 +25,71 @@
         android:gravity="center_horizontal"
         android:orientation="vertical">
 
-        <ImageButton
+        <android.support.design.widget.FloatingActionButton
             android:id="@+id/btn_takepicture"
             style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:contentDescription="@string/image_access_sample_still"
             android:src="@drawable/camera" />
 
-        <ImageButton
+        <android.support.design.widget.FloatingActionButton
             android:id="@+id/btn_takepreview"
             style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:contentDescription="@string/image_access_sample_continuous"
             android:src="@drawable/video" />
-
-        <View
-            android:id="@+id/sample"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="@color/colorPrimary" />
-
-        <TextView
-            android:id="@+id/brightness"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:minEms="3"
-            tools:text="255" />
-
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/view_group"
+            android:orientation="vertical"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/sample"
+                android:textColor="@android:color/secondary_text_dark" />
+
+            <View
+                android:id="@+id/sample"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:background="@color/colorPrimary" />
+
+            <TextView
+                android:id="@+id/brightness"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:minEms="3"
+                android:textColor="@android:color/secondary_text_dark"
+                tools:text="255" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:background="@drawable/view_group"
+            android:gravity="center"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:text="Brightness Adjustment" />
+                android:text="@string/brightness_adjustment"
+                android:textColor="@android:color/secondary_text_dark" />
 
             <SeekBar
                 android:id="@+id/seekBar"
