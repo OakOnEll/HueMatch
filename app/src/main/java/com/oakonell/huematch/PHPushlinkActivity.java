@@ -120,9 +120,7 @@ public class PHPushlinkActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (listener != null) {
-            phHueSDK.getNotificationManager().unregisterSDKListener(listener);
-        }
+        phHueSDK.getNotificationManager().unregisterSDKListener(listener);
     }
 
 }

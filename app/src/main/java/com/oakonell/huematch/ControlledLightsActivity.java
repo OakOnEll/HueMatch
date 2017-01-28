@@ -47,7 +47,6 @@ public class ControlledLightsActivity extends AppCompatActivity {
     private RoomLightsAdapter lightsAdapter;
     private TextView bridgeNameView;
     private HueSharedPreferences prefs;
-    private View bridge_group;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +75,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
         Button okButton = (Button) findViewById(R.id.ok);
         Button cancelButton = (Button) findViewById(R.id.cancel);
-        bridge_group = findViewById(R.id.bridge_group);
+        View bridge_group = findViewById(R.id.bridge_group);
 
         bridge_group.setOnClickListener(new View.OnClickListener() {
             @Override

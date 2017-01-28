@@ -248,9 +248,7 @@ public class PHHomeActivity extends AppCompatActivity implements OnItemClickList
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (listener != null) {
-            phHueSDK.getNotificationManager().unregisterSDKListener(listener);
-        }
+        phHueSDK.getNotificationManager().unregisterSDKListener(listener);
         phHueSDK.disableAllHeartbeat();
     }
 

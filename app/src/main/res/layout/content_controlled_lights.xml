@@ -15,9 +15,9 @@
 
     <LinearLayout
         android:id="@+id/bridge_group"
-        style="?android:listSelector"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
         android:orientation="horizontal">
 
         <TextView
