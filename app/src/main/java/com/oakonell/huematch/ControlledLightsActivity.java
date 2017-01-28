@@ -2,6 +2,7 @@ package com.oakonell.huematch;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
@@ -29,6 +30,7 @@ import com.philips.lighting.model.PHGroup;
 import com.philips.lighting.model.PHLight;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
     private RoomLightsAdapter lightsAdapter;
     private TextView bridgeNameView;
     private HueSharedPreferences prefs;
+    private View bridge_group;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +56,9 @@ public class ControlledLightsActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if(NavUtils.getParentActivityName(this) != null) {
+        if (NavUtils.getParentActivityName(this) != null) {
             ActionBar actionBar = this.getSupportActionBar();
-            if(actionBar != null) {
+            if (actionBar != null) {
                 actionBar.setDisplayHomeAsUpEnabled(true);
             }
         }
@@ -73,6 +76,25 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
         Button okButton = (Button) findViewById(R.id.ok);
         Button cancelButton = (Button) findViewById(R.id.cancel);
+        bridge_group = findViewById(R.id.bridge_group);
+
+        bridge_group.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                prefs.setControlledLightIds(Collections.<String>emptySet());
+                prefs.setLastConnectedIPAddress("");
+                prefs.setUsername("");
+
+                Intent intent = new Intent(getApplicationContext(), PHHomeActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+                    intent.addFlags(0x8000); // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
+                startActivity(intent);
+                finish();
+            }
+        });
+
         bridgeNameView = (TextView) findViewById(R.id.bridge_name);
 
         lightsListView = (RecyclerView) findViewById(R.id.lights_list);

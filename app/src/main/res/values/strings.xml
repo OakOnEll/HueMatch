@@ -132,4 +132,5 @@
     <string name="bridge">Bridge:</string>
     <string name="brightness_adjustment">Brightness Adjustment</string>
     <string name="sample">Sample</string>
+    <string name="about">About</string>
 </resources>

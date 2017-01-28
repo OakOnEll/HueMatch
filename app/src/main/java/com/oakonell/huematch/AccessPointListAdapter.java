@@ -10,6 +10,10 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.philips.lighting.hue.sdk.PHAccessPoint;
+import com.philips.lighting.hue.sdk.PHHueSDK;
+import com.philips.lighting.model.PHBridge;
+import com.philips.lighting.model.PHBridgeConfiguration;
+import com.philips.lighting.model.PHGroup;
 
 import java.util.List;
 
@@ -20,6 +24,7 @@ import java.util.List;
  */
 public class AccessPointListAdapter extends BaseAdapter {
     private final LayoutInflater mInflater;
+    private final PHHueSDK hueSdk;
     private List<PHAccessPoint> accessPoints;
 
     /**
@@ -30,6 +35,7 @@ public class AccessPointListAdapter extends BaseAdapter {
     class BridgeListItem {
         private TextView bridgeIp;
         private TextView bridgeMac;
+        private TextView rooms;
     }
 
     /**
@@ -38,10 +44,11 @@ public class AccessPointListAdapter extends BaseAdapter {
      * @param context      the Context object.
      * @param accessPoints an array list of {@link PHAccessPoint} object to display.
      */
-    public AccessPointListAdapter(Context context, List<PHAccessPoint> accessPoints) {
+    public AccessPointListAdapter(Context context, PHHueSDK hueSdk, List<PHAccessPoint> accessPoints) {
         // Cache the LayoutInflate to avoid asking for a new one each time.
         mInflater = LayoutInflater.from(context);
         this.accessPoints = accessPoints;
+        this.hueSdk = hueSdk;
     }
 
     /**
@@ -61,16 +68,37 @@ public class AccessPointListAdapter extends BaseAdapter {
             item = new BridgeListItem();
             item.bridgeMac = (TextView) convertView.findViewById(R.id.bridge_mac);
             item.bridgeIp = (TextView) convertView.findViewById(R.id.bridge_ip);
+            item.rooms = (TextView) convertView.findViewById(R.id.rooms);
 
             convertView.setTag(item);
         } else {
             item = (BridgeListItem) convertView.getTag();
         }
+
         PHAccessPoint accessPoint = accessPoints.get(position);
+
+        String bridgeId = accessPoint.getBridgeId();
+
+        StringBuilder groupsBuilder = new StringBuilder();
+        // Huh, this doesn't do anything, probably because not "authenticated"
+        for (PHBridge each : hueSdk.getAllBridges()) {
+            final PHBridgeConfiguration configuration = each.getResourceCache().getBridgeConfiguration();
+            if (!configuration.getBridgeID().equals(bridgeId)) continue;
+
+            boolean first = true;
+            for (PHGroup group : each.getResourceCache().getAllGroups()) {
+                if (!first) groupsBuilder.append(", ");
+                groupsBuilder.append(group.getName());
+                first = false;
+            }
+        }
+
         item.bridgeIp.setTextColor(Color.BLACK);
         item.bridgeIp.setText(accessPoint.getIpAddress());
         item.bridgeMac.setTextColor(Color.DKGRAY);
         item.bridgeMac.setText(accessPoint.getMacAddress());
+        item.rooms.setTextColor(Color.DKGRAY);
+        item.rooms.setText(groupsBuilder.toString());
 
         return convertView;
     }

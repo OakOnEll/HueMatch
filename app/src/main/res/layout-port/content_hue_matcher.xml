@@ -12,6 +12,7 @@
         android:id="@+id/texture"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_gravity="center"
         android:layout_weight="1" />
 
     <LinearLayout
@@ -38,7 +39,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="8dp"
                 android:contentDescription="@string/image_access_sample_still"
-                android:src="@drawable/camera" />
+                android:src="@drawable/ic_photo_camera_black_24dp" />
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/btn_takepreview"
@@ -47,7 +48,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
                 android:contentDescription="@string/image_access_sample_continuous"
-                android:src="@drawable/video" />
+                android:src="@drawable/ic_videocam_black_24dp" />
 
 
         </LinearLayout>

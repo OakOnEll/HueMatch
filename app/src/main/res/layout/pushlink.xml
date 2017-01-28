@@ -9,7 +9,7 @@
     android:paddingTop="@dimen/activity_vertical_margin">
 
     <TextView
-        style="@android:style/TextAppearance.Material.Medium"
+        style="@android:style/TextAppearance.Material.Large"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"

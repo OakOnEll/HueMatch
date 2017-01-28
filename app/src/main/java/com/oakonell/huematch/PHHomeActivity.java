@@ -1,9 +1,9 @@
 package com.oakonell.huematch;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,8 +22,10 @@ import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHHueError;
 import com.philips.lighting.model.PHHueParsingError;
 
+import java.util.Collections;
 import java.util.List;
 
+import hugo.weaving.DebugLog;
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -37,8 +39,8 @@ import io.fabric.sdk.android.Fabric;
  * <p>
  * For explanation on key concepts visit: https://github.com/PhilipsHue/PhilipsHueSDK-Java-MultiPlatform-Android
  */
-public class PHHomeActivity extends Activity implements OnItemClickListener {
-    private static final String TAG = "QuickStart";
+public class PHHomeActivity extends AppCompatActivity implements OnItemClickListener {
+    private static final String TAG = "PHHomeActivity";
 
     private PHHueSDK phHueSDK;
     private HueSharedPreferences prefs;
@@ -50,23 +52,30 @@ public class PHHomeActivity extends Activity implements OnItemClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
-        setContentView(R.layout.bridgelistlinear);
+        setContentView(R.layout.activity_home);
 
+        createHueSDK();
+
+        adapter = new AccessPointListAdapter(getApplicationContext(), phHueSDK, Collections.<PHAccessPoint>emptyList());
+
+        ListView accessPointList = (ListView) findViewById(R.id.bridge_list);
+        accessPointList.setOnItemClickListener(this);
+        accessPointList.setAdapter(adapter);
+
+    }
+
+    @DebugLog
+    private void createHueSDK() {
         // Gets an instance of the Hue SDK.
         phHueSDK = PHHueSDK.create();
 
         // Set the Device Name (name of your app). This will be stored in your bridge whitelist entry.
         phHueSDK.setAppName(getApplicationContext().getPackageName());
-        phHueSDK.setDeviceName(android.os.Build.MODEL);
+        phHueSDK.setDeviceName(Build.MODEL);
 
         // Register the PHSDKListener to receive callbacks from the bridge.
         phHueSDK.getNotificationManager().registerSDKListener(listener);
 
-        adapter = new AccessPointListAdapter(getApplicationContext(), phHueSDK.getAccessPointsFound());
-
-        ListView accessPointList = (ListView) findViewById(R.id.bridge_list);
-        accessPointList.setOnItemClickListener(this);
-        accessPointList.setAdapter(adapter);
 
         // Try to automatically connect to the last known bridge.  For first time use this will be empty so a bridge search is automatically started.
         prefs = HueSharedPreferences.getInstance(getApplicationContext());

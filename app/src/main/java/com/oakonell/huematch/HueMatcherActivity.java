@@ -152,14 +152,6 @@ public class HueMatcherActivity extends AppCompatActivity {
                     .build());
         }
 
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
 
         Fabric.with(this, new Crashlytics());
         phHueSDK = PHHueSDK.create();
@@ -226,15 +218,12 @@ public class HueMatcherActivity extends AppCompatActivity {
     private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            //open your camera here
-//            setupCamera(width, height);
-//            transformImage(width, height);
             openCamera(width, height);
         }
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-            // Transform you image captured size according to the surface width and height
+            // Transform the image captured size according to the surface width and height
             configureTransform(width, height);
         }
 
@@ -394,7 +383,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         } else {
             captureState = CaptureState.OFF;
             takeStillButton.setEnabled(true);
-            takeContinuousButton.setImageResource(R.drawable.video);
+            takeContinuousButton.setImageResource(R.drawable.ic_videocam_black_24dp);
 
             // allow screen to turn off
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -405,7 +394,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     private void startContinuous(boolean force) {
         if (!checkLightsForCapture(force, CaptureState.CONTINUOUS)) return;
         takeStillButton.setEnabled(false);
-        takeContinuousButton.setImageResource(R.drawable.stop_video);
+        takeContinuousButton.setImageResource(R.drawable.ic_stop_black_24dp);
         captureState = CaptureState.CONTINUOUS;
         // keep screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -541,7 +530,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    Toast.makeText(HueMatcherActivity.this, "Configuration change", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HueMatcherActivity.this, "Configuration failed", Toast.LENGTH_SHORT).show();
                 }
             }, null);
         } catch (CameraAccessException e) {
@@ -1068,10 +1057,6 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void launchLightChooser() {
         Intent intent = new Intent(getApplicationContext(), ControlledLightsActivity.class);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-//                    intent.addFlags(0x8000); // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
         startActivity(intent);
     }
 

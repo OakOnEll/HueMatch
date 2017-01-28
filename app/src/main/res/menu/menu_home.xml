@@ -3,10 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/find_new_bridge"
-
-        android:title="@string/menu_find_bridge"
-        app:showAsAction="always"
-
-        />
+        android:icon="@drawable/ic_refresh_white_24dp"
+        android:title="@string/menu_refresh"
+        app:showAsAction="always" />
 
 </menu>

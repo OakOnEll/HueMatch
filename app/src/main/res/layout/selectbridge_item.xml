@@ -3,19 +3,43 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="96dp"
-    android:orientation="vertical">
+    android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/bridge_mac"
+    <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        tools:text="MAC Address" />
+        android:layout_gravity="center"
+        android:layout_margin="8dp"
+        android:src="@drawable/bridge_v2" />
 
-    <TextView
-        android:id="@+id/bridge_ip"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        tools:text="127.0.0.1" />
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/bridge_mac"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            tools:text="MAC Address" />
+
+        <TextView
+            android:id="@+id/bridge_ip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="127.0.0.1" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/rooms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginLeft="16dp"
+        tools:text="Living Room, Porch" />
+
 
 </LinearLayout>
