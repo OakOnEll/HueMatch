@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -41,6 +42,7 @@ import android.util.Log;
 import android.util.Size;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -81,7 +83,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private static final java.lang.String BRIGHTNESS_SCALE_SAVE_KEY = "brightnessScale";
     private static final java.lang.String IS_CONTINUOUS_SAVE_KEY = "continuous";
-
+    private static final java.lang.String ZOOM_RECT_SAVE_KEY = "zoomRect";
 
     private static final String FRAGMENT_DIALOG = "dialog";
 
@@ -92,6 +94,10 @@ public class HueMatcherActivity extends AppCompatActivity {
     private HueSharedPreferences prefs;
     private Set<String> controlledIds;
     private boolean autostartContinuous;
+    float finger_spacing;
+    int zoom_level;
+    private Rect zoomRect;
+
 
     enum CaptureState {
         OFF, STILL, CONTINUOUS
@@ -159,6 +165,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         textureView = (AutoFitTextureView) findViewById(R.id.texture);
         textureView.setSurfaceTextureListener(textureListener);
+        textureView.setOnTouchListener(surfaceTouchListener);
 
         takeStillButton = (ImageButton) findViewById(R.id.btn_takepicture);
         takeContinuousButton = (ImageButton) findViewById(R.id.btn_takepreview);
@@ -190,6 +197,8 @@ public class HueMatcherActivity extends AppCompatActivity {
         if (savedInstanceState != null) {
             brightnessScale = savedInstanceState.getInt(BRIGHTNESS_SCALE_SAVE_KEY, HueUtils.BRIGHTNESS_MAX);
             brightnessSeekbar.setProgress(brightnessScale);
+
+            zoomRect = savedInstanceState.getParcelable(ZOOM_RECT_SAVE_KEY);
 
             // startContinuous on init after camera is running, and after prefs is assigned to get controlledIds
             if (savedInstanceState.getBoolean(IS_CONTINUOUS_SAVE_KEY, false)) {
@@ -577,6 +586,9 @@ public class HueMatcherActivity extends AppCompatActivity {
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
 
+        if (zoomRect != null) {
+            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+        }
 
         try {
             cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
@@ -1071,5 +1083,80 @@ public class HueMatcherActivity extends AppCompatActivity {
         if (captureState == CaptureState.CONTINUOUS) {
             outState.putBoolean(IS_CONTINUOUS_SAVE_KEY, true);
         }
+        if (zoomRect != null) {
+            outState.putParcelable(ZOOM_RECT_SAVE_KEY, zoomRect);
+        }
     }
+
+    /**
+     * Determine the space between the first two fingers
+     */
+    @SuppressWarnings("deprecation")
+    private float getFingerSpacing(MotionEvent event) {
+
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
+    }
+
+
+    private View.OnTouchListener surfaceTouchListener = new View.OnTouchListener() {
+        public boolean onTouch(View view, MotionEvent event) {
+            // http://stackoverflow.com/questions/35968315/android-camera2-handle-zoom
+            try {
+                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
+                float maxZoom = (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)) * 10;
+
+                Rect m = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+                int action = event.getAction();
+                float current_finger_spacing;
+
+                if (event.getPointerCount() > 1) {
+                    // Multi touch logic
+                    current_finger_spacing = getFingerSpacing(event);
+
+                    if (finger_spacing != 0) {
+                        if (current_finger_spacing > finger_spacing && maxZoom > zoom_level) {
+                            zoom_level++;
+
+                        } else if (current_finger_spacing < finger_spacing && zoom_level > 1) {
+                            zoom_level--;
+
+                        }
+                        int minW = (int) (m.width() / maxZoom);
+                        int minH = (int) (m.height() / maxZoom);
+                        int difW = m.width() - minW;
+                        int difH = m.height() - minH;
+                        int cropW = (int) (difW / 100.0 * zoom_level);
+                        int cropH = (int) (difH / 100.0 * zoom_level);
+                        cropW -= cropW & 3;
+                        cropH -= cropH & 3;
+                        zoomRect = new Rect(cropW, cropH, m.width() - cropW, m.height() - cropH);
+                        captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+                    }
+                    finger_spacing = current_finger_spacing;
+                } else {
+                    if (action == MotionEvent.ACTION_UP) {
+                        //single touch logic
+                    }
+                }
+
+                try {
+                    cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), null,
+                            null);
+                } catch (CameraAccessException e) {
+                    Log.e(TAG, "Camera error while zooming", e);
+                } catch (NullPointerException ex) {
+                    Log.e(TAG, "Camera error while zooming", ex);
+                    ex.printStackTrace();
+                }
+            } catch (CameraAccessException e) {
+                throw new RuntimeException("can not access camera.", e);
+            }
+
+            return true;
+        }
+    };
+
 }
