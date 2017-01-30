@@ -42,7 +42,11 @@ public class AboutActivity
                 .icon(R.drawable.ic_book_open_black_24dp)
                 .setOnClickListener(ConvenienceBuilder.createWebViewDialogOnClickAction(context, getString(R.string.changelog), "file:///android_asset/changelog.txt", true, true))
                 .build());
-
+        appCardBuilder.addItem(new MaterialAboutActionItem.Builder()
+                .text(R.string.privacy_policy)
+                .icon(R.drawable.ic_lock_black_24dp)
+                .setOnClickListener(ConvenienceBuilder.createWebViewDialogOnClickAction(context, getString(R.string.privacy_policy), "file:///android_asset/privacy_policy.html", true, true))
+                .build());
 
         MaterialAboutCard.Builder authorCardBuilder = new MaterialAboutCard.Builder();
         authorCardBuilder.title(R.string.author);
