@@ -28,4 +28,7 @@
     <string name="about">About</string>
     <string name="bridge_icon">Bridge icon</string>
     <string name="light_transition_time">Light Transition Time:</string>
+    <string name="about_version">Version</string>
+    <string name="about_libraries">Libraries</string>
+    <string name="changelog">Changelog</string>
 </resources>
