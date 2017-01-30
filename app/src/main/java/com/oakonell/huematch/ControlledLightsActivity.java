@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.philips.lighting.hue.sdk.PHHueSDK;
@@ -47,6 +48,9 @@ public class ControlledLightsActivity extends AppCompatActivity {
     private RoomLightsAdapter lightsAdapter;
     private TextView bridgeNameView;
     private HueSharedPreferences prefs;
+
+    private TextView transition_time;
+    private SeekBar transition_time_seek;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +98,9 @@ public class ControlledLightsActivity extends AppCompatActivity {
             }
         });
 
+        transition_time = (TextView) findViewById(R.id.transition_time);
+        transition_time_seek = (SeekBar) findViewById(R.id.transition_time_seek);
+
         bridgeNameView = (TextView) findViewById(R.id.bridge_name);
 
         lightsListView = (RecyclerView) findViewById(R.id.lights_list);
@@ -111,6 +118,10 @@ public class ControlledLightsActivity extends AppCompatActivity {
                     }
                 }
                 prefs.setControlledLightIds(result);
+
+                // save the transition time
+                int transitionTime = transition_time_seek.getProgress();
+                prefs.setTransitionTime(transitionTime);
 
                 finish();
             }
@@ -146,6 +157,31 @@ public class ControlledLightsActivity extends AppCompatActivity {
         bridgeNameView.setText(bridgeName);
 
         prefs = HueSharedPreferences.getInstance(getApplicationContext());
+
+
+        // setup the transition time
+        transition_time.setText(Integer.toString(prefs.getTransitionTime()));
+        transition_time_seek.setProgress(prefs.getTransitionTime());
+        transition_time_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                transition_time_seek.setProgress(progress);
+                transition_time.setText(Integer.toString(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+
+        // setup controlled lights
         Set<String> controlledIds = prefs.getControlledLightIds();
 
         List<LightOrRoom> list = new ArrayList<>();

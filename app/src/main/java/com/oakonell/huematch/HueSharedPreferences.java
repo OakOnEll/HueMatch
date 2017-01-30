@@ -12,6 +12,9 @@ public class HueSharedPreferences {
     private static final String HUE_SHARED_PREFERENCES_STORE = "HueSharedPrefs";
     private static final String LAST_CONNECTED_USERNAME = "LastConnectedUsername";
     private static final String LAST_CONNECTED_IP = "LastConnectedIP";
+    private static final String TRANSITION_TIME = "transitionTime";
+    private static final int DEFAULT_TRANSITION_TIME = 400;
+
 
     private static final String CONTROLLED_LIGHT_IDS = "controlledLightIds";
 
@@ -60,4 +63,14 @@ public class HueSharedPreferences {
         mSharedPreferencesEditor.putStringSet(CONTROLLED_LIGHT_IDS, ids);
         return mSharedPreferencesEditor.commit();
     }
+
+    public int getTransitionTime() {
+        return mSharedPreferences.getInt(TRANSITION_TIME, DEFAULT_TRANSITION_TIME);
+    }
+
+    public boolean setTransitionTime(int timeMs) {
+        mSharedPreferencesEditor.putInt(TRANSITION_TIME, timeMs);
+        return mSharedPreferencesEditor.commit();
+    }
+
 }
