@@ -1,2 +1,5 @@
+v1.07
+v1.06
+ Add privacy policy
 v1.05
  Support zoom

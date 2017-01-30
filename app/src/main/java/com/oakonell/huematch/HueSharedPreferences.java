@@ -13,7 +13,7 @@ public class HueSharedPreferences {
     private static final String LAST_CONNECTED_USERNAME = "LastConnectedUsername";
     private static final String LAST_CONNECTED_IP = "LastConnectedIP";
     private static final String TRANSITION_TIME = "transitionTime";
-    private static final int DEFAULT_TRANSITION_TIME = 400;
+    private static final int DEFAULT_TRANSITION_TIME = 4;
 
 
     private static final String CONTROLLED_LIGHT_IDS = "controlledLightIds";

@@ -160,13 +160,13 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
 
         // setup the transition time
-        transition_time.setText(Integer.toString(prefs.getTransitionTime()));
+        transition_time.setText(Integer.toString(prefs.getTransitionTime() * 100));
         transition_time_seek.setProgress(prefs.getTransitionTime());
         transition_time_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                transition_time_seek.setProgress(progress);
-                transition_time.setText(Integer.toString(progress));
+                // display in ms, where value stored and used by hue API is in 100s of ms, eg 4=100s
+                transition_time.setText(Integer.toString(progress * 100));
             }
 
             @Override

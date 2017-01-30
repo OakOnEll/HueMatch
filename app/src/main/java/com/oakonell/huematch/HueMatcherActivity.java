@@ -132,7 +132,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     private CaptureState captureState = CaptureState.OFF;
 
     private PHHueSDK phHueSDK;
-    private int transitionTimeMs;
+    private int transitionTimeHundredsOfMs;
 
     private long start;
 
@@ -661,7 +661,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         if (controlledIds.isEmpty()) {
             launchLightChooser();
         }
-        transitionTimeMs = prefs.getTransitionTime();
+        transitionTimeHundredsOfMs = prefs.getTransitionTime();
 
         startBackgroundThread();
         if (textureView.isAvailable()) {
@@ -717,7 +717,8 @@ public class HueMatcherActivity extends AppCompatActivity {
 
             // To validate your lightstate is valid (before sending to the bridge) you can use:
             // String validState = lightState.validateState();
-            lightState.setTransitionTime(transitionTimeMs);
+            // API takes in 100s of ms, not ms itself.
+            lightState.setTransitionTime(transitionTimeHundredsOfMs);
             if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT) {
                 float[] xy = HueUtils.colorToXY(colorAndBrightness.getColor(), light);
                 lightState.setX(xy[0]);
