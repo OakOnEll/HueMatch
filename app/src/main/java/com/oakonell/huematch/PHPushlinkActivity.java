@@ -1,6 +1,5 @@
 package com.oakonell.huematch;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
