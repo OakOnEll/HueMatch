@@ -3,6 +3,10 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#009688</color>
+    <color name="colorAccentPressed">#007466</color>
+    <color name="button_disabled">#80bebebe</color>
+
+    <color name="group_line">@color/colorPrimaryDark</color>
 
     <!--    <color name="primary_light">#C5CAE9</color>
         <color name="primary_text">#212121</color>

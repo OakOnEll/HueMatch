@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     style="?android:listSelector"
     android:layout_width="match_parent"
-    android:layout_height="48dp"
+    android:layout_height="@dimen/row_height"
+    android:layout_marginEnd="@dimen/column_margin"
+    android:layout_marginStart="@dimen/light_row_padding"
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
@@ -12,14 +14,14 @@
         android:id="@+id/checked"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="74dp"
-        android:layout_marginRight="24dp" />
+        android:layout_marginEnd="@dimen/column_margin"
+        android:layout_marginStart="@dimen/column_margin" />
 
     <ImageView
         android:id="@+id/image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="24dp"
+        android:layout_marginEnd="@dimen/column_margin"
         android:contentDescription="@string/image_access_bulb_type"
         app:srcCompat="@drawable/white_e27" />
 

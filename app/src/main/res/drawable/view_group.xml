@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <stroke
-        android:width="1dip"
-        android:color="@color/colorPrimaryDark" />
-    <corners android:radius="10dip" />
+        android:width="@dimen/group_line_thickness"
+        android:color="@color/group_line" />
+    <corners android:radius="@dimen/group_round_radius" />
     <padding
-        android:bottom="2dip"
-        android:left="2dip"
-        android:right="2dip"
-        android:top="2dip" />
+        android:bottom="@dimen/group_padding"
+        android:left="@dimen/group_padding"
+        android:right="@dimen/group_padding"
+        android:top="@dimen/group_padding" />
 </shape>

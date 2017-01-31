@@ -9,8 +9,8 @@
     <string name="btn_cancel">Cancel</string>
     <string name="menu_refresh">Refresh</string>
     <string name="txt_pushlink">Pushlink</string>
-    <string name="press_pushlink_button">Press the link button on the bridge</string>
-    <string name="txt_select_smartbridge">Please select a Hue bridge to use for this app</string>
+    <string name="press_pushlink_button">Press the link button on the bridge.</string>
+    <string name="txt_select_smartbridge">Please select a Hue bridge to use for this app.</string>
     <string name="title_error">Error</string>
     <string name="camera_error">Camera API version Error</string>
     <string name="title_activity_controlled_lights">Controlled Lights</string>

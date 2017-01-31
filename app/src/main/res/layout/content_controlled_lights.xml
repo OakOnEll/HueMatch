@@ -31,14 +31,16 @@
                 style="@android:style/TextAppearance.Material.Medium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/text_margin"
+                android:layout_marginEnd="@dimen/text_margin"
                 android:text="@string/light_transition_time" />
 
             <TextView
                 android:id="@+id/transition_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/text_margin"
+                android:layout_marginEnd="@dimen/text_margin"
+                android:gravity="end"
+                android:minEms="4"
                 tools:text="400" />
 
             <TextView
@@ -51,20 +53,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
+            android:layout_marginLeft="@dimen/text_margin"
+            android:layout_marginRight="@dimen/text_margin"
             android:gravity="center_horizontal|center_vertical"
             android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/text_margin"
+                android:layout_marginEnd="@dimen/text_margin"
                 android:text="0 ms" />
 
             <SeekBar
-                style="@style/Widget.AppCompat.SeekBar.Discrete"
                 android:id="@+id/transition_time_seek"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
                 android:layout_width="0dp"
                 android:layout_height="32dp"
                 android:layout_weight="1"
@@ -73,7 +75,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/text_margin"
+                android:layout_marginEnd="@dimen/text_margin"
                 android:text="1,000 ms" />
 
         </LinearLayout>
@@ -83,7 +85,7 @@
         android:id="@+id/bridge_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/text_margin"
         android:background="?attr/selectableItemBackground"
         android:orientation="horizontal">
 
@@ -91,7 +93,7 @@
             style="@android:style/TextAppearance.Material.Large"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="@dimen/text_margin"
+            android:layout_marginEnd="@dimen/text_margin"
             android:text="@string/bridge" />
 
         <TextView
@@ -116,7 +118,7 @@
         style="?android:attr/buttonBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="right">
+        android:gravity="end">
 
         <Button
             android:id="@+id/cancel"

@@ -27,25 +27,25 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginBottom="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginBottom="@dimen/text_margin"
+            android:layout_marginTop="@dimen/text_margin"
             android:orientation="horizontal">
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/btn_takepicture"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="8dp"
+            <ImageButton
+                android:id="@+id/btn_sample_still"
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="@dimen/fab_size"
+                android:layout_marginEnd="@dimen/half_text_margin"
+                android:background="@drawable/ripple_rounded_button"
                 android:contentDescription="@string/image_access_sample_still"
                 android:src="@drawable/ic_photo_camera_black_24dp" />
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/btn_takepreview"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
+            <ImageButton
+                android:id="@+id/btn_sample_continuously"
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="@dimen/fab_size"
+                android:layout_marginStart="@dimen/half_text_margin"
+                android:background="@drawable/ripple_rounded_button"
                 android:contentDescription="@string/image_access_sample_continuous"
                 android:src="@drawable/ic_videocam_black_24dp" />
 
@@ -53,7 +53,7 @@
         </LinearLayout>
 
 
-        <LinearLayout
+        <LinearLayout android:baselineAligned="false"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -71,7 +71,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginRight="@dimen/text_margin"
+                    android:layout_marginEnd="@dimen/text_margin"
                     android:text="@string/sample"
                     android:textAlignment="textEnd"
                     android:textColor="@android:color/secondary_text_dark" />
@@ -80,7 +80,7 @@
                     android:id="@+id/sample"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
-                    android:layout_marginRight="@dimen/text_margin"
+                    android:layout_marginEnd="@dimen/text_margin"
                     tools:background="@color/colorPrimary" />
 
                 <TextView
@@ -104,7 +104,7 @@
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginRight="@dimen/text_margin"
+                    android:layout_marginEnd="@dimen/text_margin"
                     android:layout_weight="1"
                     android:text="@string/brightness_adjustment"
                     android:textAlignment="textEnd"
@@ -113,7 +113,7 @@
                 <SeekBar
                     android:id="@+id/seekBar"
                     android:layout_width="0dp"
-                    android:layout_height="48dp"
+                    android:layout_height="@dimen/row_height"
                     android:layout_weight="1"
                     android:max="255" />
 

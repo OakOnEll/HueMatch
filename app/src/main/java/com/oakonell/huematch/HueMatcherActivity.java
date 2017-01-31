@@ -12,6 +12,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Outline;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -46,6 +47,7 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
@@ -167,8 +169,19 @@ public class HueMatcherActivity extends AppCompatActivity {
         textureView.setSurfaceTextureListener(textureListener);
         textureView.setOnTouchListener(surfaceTouchListener);
 
-        takeStillButton = (ImageButton) findViewById(R.id.btn_takepicture);
-        takeContinuousButton = (ImageButton) findViewById(R.id.btn_takepreview);
+        takeStillButton = (ImageButton) findViewById(R.id.btn_sample_still);
+        takeContinuousButton = (ImageButton) findViewById(R.id.btn_sample_continuously);
+
+        ViewOutlineProvider viewOutlineProvider = new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                // Or read size directly from the view's width/height
+                int size = getResources().getDimensionPixelSize(R.dimen.fab_size);
+                outline.setOval(0, 0, size, size);
+            }
+        };
+        takeContinuousButton.setOutlineProvider(viewOutlineProvider);
+        takeStillButton.setOutlineProvider(viewOutlineProvider);
 
         sampleView = findViewById(R.id.sample);
 

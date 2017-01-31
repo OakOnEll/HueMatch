@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="64dp"
+    android:layout_height="@dimen/row_height"
+    android:layout_marginTop="@dimen/row_height"
     android:gravity="bottom"
     android:orientation="vertical">
 
@@ -10,5 +12,5 @@
         style="@android:style/TextAppearance.Material.Medium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="TextView" />
+        tools:text="Living Room" />
 </LinearLayout>
