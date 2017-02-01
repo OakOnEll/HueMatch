@@ -1,3 +1,5 @@
+v1.08
+ Fix circular buttons
 v1.07
  Fix transition time
 v1.06
