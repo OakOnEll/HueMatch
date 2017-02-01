@@ -30,6 +30,7 @@ import com.philips.lighting.model.PHBridgeConfiguration;
 import com.philips.lighting.model.PHGroup;
 import com.philips.lighting.model.PHLight;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -160,13 +161,13 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
 
         // setup the transition time
-        transition_time.setText(Integer.toString(prefs.getTransitionTime() * 100));
+        transition_time.setText(NumberFormat.getIntegerInstance().format(prefs.getTransitionTime() * 100));
         transition_time_seek.setProgress(prefs.getTransitionTime());
         transition_time_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 // display in ms, where value stored and used by hue API is in 100s of ms, eg 4=100s
-                transition_time.setText(Integer.toString(progress * 100));
+                transition_time.setText(NumberFormat.getIntegerInstance().format(progress * 100));
             }
 
             @Override
@@ -248,8 +249,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
             super(itemView);
         }
 
-        public void bind(RoomLightsAdapter roomLightsAdapter, LightOrRoom lightOrRoom) {
-        }
+        abstract public void bind(RoomLightsAdapter roomLightsAdapter, LightOrRoom lightOrRoom);
     }
 
     private static class LightViewHolder extends ItemViewHolder {

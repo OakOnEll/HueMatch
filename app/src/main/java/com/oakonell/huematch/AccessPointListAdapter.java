@@ -1,6 +1,7 @@
 package com.oakonell.huematch;
 
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -59,6 +60,7 @@ public class AccessPointListAdapter extends BaseAdapter {
      * @param parent      The view group.
      * @return A View corresponding to the data at the specified position.
      */
+    @SuppressLint("InflateParams")
     public View getView(final int position, View convertView, ViewGroup parent) {
         BridgeListItem item;
 

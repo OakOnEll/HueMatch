@@ -108,7 +108,8 @@
                     android:layout_weight="1"
                     android:text="@string/brightness_adjustment"
                     android:textAlignment="textEnd"
-                    android:textColor="@android:color/secondary_text_dark" />
+                    android:textColor="@android:color/secondary_text_dark"
+                    tools:ignore="NestedWeights" />
 
                 <SeekBar
                     android:id="@+id/seekBar"

@@ -11,7 +11,6 @@
     <string name="txt_pushlink">Pushlink</string>
     <string name="press_pushlink_button">Press the link button on the bridge.</string>
     <string name="txt_select_smartbridge">Please select a Hue bridge to use for this app.</string>
-    <string name="title_error">Error</string>
     <string name="camera_error">Camera API version Error</string>
     <string name="title_activity_controlled_lights">Controlled Lights</string>
     <string name="light_issues_dialog">Light Issues</string>
@@ -32,4 +31,31 @@
     <string name="about_libraries">Libraries</string>
     <string name="changelog">Changelog</string>
     <string name="privacy_policy">Privacy Policy</string>
+    <string name="purchase_full_app">Purchase Full App</string>
+    <string name="full_app_about_item">Full App- Thank You!</string>
+    <string name="unknown_app_license_status_about_item">Unknown App status</string>
+
+    <string name="title_error">Error</string>
+    <string name="error_checking_license">Error checking license state.</string>
+    <string name="error_checking_license_async">Error checking license state asynchronously.</string>
+    <string name="error_verifying_license">Error verifying app license.</string>
+    <string name="title_trial_expired">Trial expired</string>
+    <string name="error_launching_purchase">Error launching purchase flow: </string>
+    <string name="error_checking_inventory_for_consumption">Error checking inventory for consuming purchase: </string>
+    <string name="error_consuming_with_reason">Error consuming purchase:</string>
+    <string name="trial_expired_not_purchased_app_close">Purchase not completed, app will close.</string>
+    <string name="title_thanks">Thanks</string>
+    <string name="thanks_for_purchasing">Thanks for purchasing Hue Matcher!</string>
+
+    <plurals name="trial_over">
+        <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>
+        <item quantity="one">Your 1 day trial period is over, you will be directed to purchase the app.</item>
+        <item quantity="other">Your %d day trial period is over, you will be directed to purchase the app.</item>
+    </plurals>
+
+    <plurals name="trial_days_remaining">
+        <item quantity="zero">Trial: 0 days remaining</item>
+        <item quantity="one">Trial: 1 day remaining</item>
+        <item quantity="other">Trial: %d days remaining</item>
+    </plurals>
 </resources>

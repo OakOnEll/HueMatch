@@ -81,6 +81,8 @@ import io.fabric.sdk.android.Fabric;
  */
 
 public class HueMatcherActivity extends AppCompatActivity {
+    public static final boolean DEBUG = false;
+
     private static final String TAG = "HueMatcherActivity";
 
     private static final java.lang.String BRIGHTNESS_SCALE_SAVE_KEY = "brightnessScale";
@@ -91,7 +93,8 @@ public class HueMatcherActivity extends AppCompatActivity {
 
 
     private static final int REQUEST_CAMERA_PERMISSION = 200;
-    private static final boolean DEBUG = false;
+    private static final boolean DEEP_DEBUG = false;
+
     private Size mPreviewSize;
     private HueSharedPreferences prefs;
     private Set<String> controlledIds;
@@ -100,6 +103,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     int zoom_level;
     private Rect zoomRect;
 
+    private final LicenseUtils licenseUtils = new LicenseUtils();
 
     enum CaptureState {
         OFF, STILL, CONTINUOUS
@@ -160,9 +164,10 @@ public class HueMatcherActivity extends AppCompatActivity {
                     .penaltyLog()
                     .build());
         }
-
-
         Fabric.with(this, new Crashlytics());
+
+        licenseUtils.onCreateBind(this, null);
+
         phHueSDK = PHHueSDK.create();
 
         textureView = (AutoFitTextureView) findViewById(R.id.texture);
@@ -467,7 +472,9 @@ public class HueMatcherActivity extends AppCompatActivity {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
                     long picTime = System.nanoTime() - start;
-                    Log.i("Camera2", "Pic preview time " + TimeUnit.NANOSECONDS.toMillis(picTime) + "ms");
+                    if (DEEP_DEBUG) {
+                        Log.i("Camera2", "Pic preview time " + TimeUnit.NANOSECONDS.toMillis(picTime) + "ms");
+                    }
                     Image image = null;
                     try {
 
@@ -486,19 +493,21 @@ public class HueMatcherActivity extends AppCompatActivity {
                         final ImageUtils.ColorAndBrightness colorAndBrightness = ImageUtils.getDominantColor(bitmap);
                         long statExtractTime = System.nanoTime() - start;
 
-                        final String message = "Picture take time: " + TimeUnit.NANOSECONDS.toMillis(picTime) + "ms" +
-                                ", BitMap retrieval time: " + TimeUnit.NANOSECONDS.toMillis(bitmapTime) + "ms, " +
-                                "stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---" +
-                                " color = " + colorAndBrightness.getColor() + ", brightness= " + colorAndBrightness.getBrightness();
-                        Log.i("HueMatcher", message);
-                        if (captureState == CaptureState.STILL) {
-                            if (DEBUG) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(HueMatcherActivity.this, message, Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                        if (DEEP_DEBUG) {
+                            final String message = "Picture take time: " + TimeUnit.NANOSECONDS.toMillis(picTime) + "ms" +
+                                    ", BitMap retrieval time: " + TimeUnit.NANOSECONDS.toMillis(bitmapTime) + "ms, " +
+                                    "stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---" +
+                                    " color = " + colorAndBrightness.getColor() + ", brightness= " + colorAndBrightness.getBrightness();
+                            Log.i("HueMatcher", message);
+                            if (captureState == CaptureState.STILL) {
+                                if (DEBUG) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(HueMatcherActivity.this, message, Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
                             }
                         }
 
@@ -608,7 +617,9 @@ public class HueMatcherActivity extends AppCompatActivity {
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    Log.i("Camera2", "capture completed");
+                    if (DEEP_DEBUG) {
+                        Log.i("Camera2", "capture completed");
+                    }
                 }
 
                 @Override
@@ -670,6 +681,8 @@ public class HueMatcherActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.e(TAG, "onResume");
+        licenseUtils.onResumeCheckLicense(this);
+
         controlledIds = prefs.getControlledLightIds();
         if (controlledIds.isEmpty()) {
             launchLightChooser();
@@ -696,15 +709,16 @@ public class HueMatcherActivity extends AppCompatActivity {
     @Override
     @DebugLog
     protected void onDestroy() {
+        super.onDestroy();
+        licenseUtils.onDestroyRelease(this);
+
         PHBridge bridge = phHueSDK.getSelectedBridge();
         if (bridge != null) {
-
             if (phHueSDK.isHeartbeatEnabled(bridge)) {
                 phHueSDK.disableHeartbeat(bridge);
             }
 
             phHueSDK.disconnect(bridge);
-            super.onDestroy();
         }
     }
 
@@ -1114,7 +1128,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
 
-    private View.OnTouchListener surfaceTouchListener = new View.OnTouchListener() {
+    private final View.OnTouchListener surfaceTouchListener = new View.OnTouchListener() {
         public boolean onTouch(View view, MotionEvent event) {
             // http://stackoverflow.com/questions/35968315/android-camera2-handle-zoom
             try {
@@ -1172,5 +1186,21 @@ public class HueMatcherActivity extends AppCompatActivity {
             return true;
         }
     };
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult(" + requestCode + "," + resultCode + "," + data);
+        // Pass on the activity result to the helper for handling
+        if (licenseUtils.handleActivityResult(this, requestCode, resultCode, data)) {
+            Log.d(TAG, "onActivityResult handled by IABUtil.");
+            return;
+        }
+        // not handled, so handle it ourselves (here's where you'd
+        // perform any handling of activity results not related to in-app
+        // billing...
+        Log.d(TAG, "onActivityResult not handled by IABUtil.");
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
 
 }
