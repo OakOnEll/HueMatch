@@ -1,3 +1,5 @@
+v1.09
+ Add In-app purchasing with trial period
 v1.08
  Fix circular buttons
 v1.07
