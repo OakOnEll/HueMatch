@@ -247,6 +247,29 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     }
 
+    private final CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
+        @Override
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+            super.onCaptureCompleted(session, request, result);
+            if (DEEP_DEBUG) {
+                Log.i("Camera2", "capture completed");
+            }
+
+       }
+
+        @Override
+        public void onCaptureFailed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureFailure failure) {
+            super.onCaptureFailed(session, request, failure);
+            Log.i("Camera2", "capture failed");
+        }
+
+        @Override
+        public void onCaptureBufferLost(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull Surface target, long frameNumber) {
+            super.onCaptureBufferLost(session, request, target, frameNumber);
+            Log.i("Camera2", "onCaptureBufferLost");
+        }
+    };
+
     private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
@@ -401,7 +424,10 @@ public class HueMatcherActivity extends AppCompatActivity {
             offLights.clear();
         }
         if (!force && !unreachableLights.isEmpty() || !offLights.isEmpty()) {
-            final SomeLightsOffDialog dialog = SomeLightsOffDialog.newInstance("Some lights are off(" + offLightsBuilder.toString() + ") or unreachable(" + unreachableLightsBuilder.toString() + ")\n" + "Turn on lights, and ignore unreachable", captureType);
+            // TODO language strings
+            final SomeLightsOffDialog dialog = SomeLightsOffDialog.newInstance("Some lights are off(" +
+                    offLightsBuilder.toString() + ") or unreachable(" + unreachableLightsBuilder.toString() + ")\n" +
+                    "Turn on lights, and ignore unreachable", captureType);
             dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
             return false;
         }
@@ -617,28 +643,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
 
         try {
-            cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
-                @Override
-                public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                    super.onCaptureCompleted(session, request, result);
-                    if (DEEP_DEBUG) {
-                        Log.i("Camera2", "capture completed");
-                    }
-                }
-
-                @Override
-                public void onCaptureFailed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureFailure failure) {
-                    super.onCaptureFailed(session, request, failure);
-                    Log.i("Camera2", "capture failed");
-                }
-
-                @Override
-                public void onCaptureBufferLost(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull Surface target, long frameNumber) {
-                    super.onCaptureBufferLost(session, request, target, frameNumber);
-                    Log.i("Camera2", "onCaptureBufferLost");
-                }
-            }, mBackgroundHandler);
-
+            cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), captureCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             Log.e(TAG, "Can't open camera preview", e);
         }
@@ -1175,8 +1180,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                 }
 
                 try {
-                    cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), null,
-                            null);
+                    cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), captureCallback, mBackgroundHandler);
                 } catch (CameraAccessException e) {
                     Log.e(TAG, "Camera error while zooming", e);
                 } catch (NullPointerException ex) {
