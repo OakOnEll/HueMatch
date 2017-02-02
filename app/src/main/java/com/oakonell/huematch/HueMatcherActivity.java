@@ -57,6 +57,7 @@ import com.oakonell.huematch.utils.AutoFitTextureView;
 import com.oakonell.huematch.utils.HueUtils;
 import com.oakonell.huematch.utils.ImageUtils;
 import com.oakonell.huematch.utils.LicenseUtils;
+import com.oakonell.huematch.utils.RunningFPSAverager;
 import com.philips.lighting.hue.listener.PHLightListener;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.model.PHBridge;
@@ -107,6 +108,10 @@ public class HueMatcherActivity extends AppCompatActivity {
     private Rect zoomRect;
 
     private final LicenseUtils licenseUtils = new LicenseUtils();
+    private View fps_heads_up;
+    private View lights_fps_heads_up;
+    private TextView cam_fps;
+    private TextView light_fps;
 
     enum CaptureState {
         OFF, STILL, CONTINUOUS
@@ -142,8 +147,6 @@ public class HueMatcherActivity extends AppCompatActivity {
     private PHHueSDK phHueSDK;
     private int transitionTimeHundredsOfMs;
 
-    private long start;
-
     @Override
     @DebugLog
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,6 +174,12 @@ public class HueMatcherActivity extends AppCompatActivity {
         licenseUtils.onCreateBind(this, null);
 
         phHueSDK = PHHueSDK.create();
+
+        fps_heads_up = findViewById(R.id.fps_heads_up);
+        cam_fps = (TextView) findViewById(R.id.cam_fps);
+        lights_fps_heads_up = findViewById(R.id.lights_fps_heads_up);
+        light_fps = (TextView) findViewById(R.id.light_fps);
+
 
         textureView = (AutoFitTextureView) findViewById(R.id.texture);
         textureView.setSurfaceTextureListener(textureListener);
@@ -245,17 +254,32 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     }
 
+    private RunningFPSAverager camFpsAverager = new RunningFPSAverager();
+    private RunningFPSAverager lightFpsAverager = new RunningFPSAverager();
+
+    long captureCallBackStart;
+    long captureCallBackEnd = System.nanoTime();
     private final CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
-
-            long picTime = System.nanoTime() - start;
+            captureCallBackStart = System.nanoTime();
+            long picDuration = captureCallBackStart - captureCallBackEnd;
             if (DEEP_DEBUG) {
-                Log.i("Camera2", "capture completed -pic preview time " + TimeUnit.NANOSECONDS.toMillis(picTime) + "ms");
+                Log.i("Camera2", "capture completed -pic preview time " + TimeUnit.NANOSECONDS.toMillis(picDuration) + "ms");
             }
 
-            processCapturedImage(picTime);
+            processCapturedImage(picDuration, captureCallBackEnd);
+            if (prefs.getViewFPS()) {
+                final double fps = camFpsAverager.addSample(System.nanoTime() - captureCallBackEnd);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        cam_fps.setText(NumberFormat.getNumberInstance().format(fps));
+                    }
+                });
+            }
+            captureCallBackEnd = System.nanoTime();
         }
 
         @Override
@@ -273,71 +297,83 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     static class BitMapData {
         Bitmap bitmap;
-        long bitmapTime;
-        long picTime;
+        long bitmapDurationNs;
+        long picDurationNs;
     }
 
-    private void processCapturedImage(final long picTime) {
+    private void processCapturedImage(final long picDurationNs, long startTimeNs) {
+        if (captureState == CaptureState.OFF) return;
+
         if (processImageTask != null && processImageTask.getStatus() != AsyncTask.Status.FINISHED)
             return;
 
+        boolean isStill = captureState == CaptureState.STILL;
+        if (captureState == CaptureState.STILL) {
+            captureState = CaptureState.OFF;
+        }
+
         long start = System.nanoTime();
         Bitmap bitmap = textureView.getBitmap();
-        long bitmapTime = System.nanoTime() - start;
+        long bitmapDuration = System.nanoTime() - start;
         BitMapData data = new BitMapData();
         data.bitmap = bitmap;
-        data.bitmapTime = bitmapTime;
-        data.picTime = picTime;
+        data.bitmapDurationNs = bitmapDuration;
+        data.picDurationNs = picDurationNs;
 
-        processImageTask = new ProcessImageTask();
+        processImageTask = new ProcessImageTask(isStill);
         processImageTask.execute(data);
     }
 
+    long processImageCallBackEnd = System.nanoTime();
+
     class ProcessImageTask extends AsyncTask<BitMapData, Object, ImageUtils.ColorAndBrightness> {
+        boolean isStill;
+
+        ProcessImageTask(boolean isStill) {
+            this.isStill = isStill;
+        }
+
         @Override
         protected ImageUtils.ColorAndBrightness doInBackground(BitMapData[] objects) {
-            try {
-                long start = System.nanoTime();
-                BitMapData bitmapData = objects[0];
-                final ImageUtils.ColorAndBrightness colorAndBrightness = ImageUtils.getDominantColor(bitmapData.bitmap);
-                long statExtractTime = System.nanoTime() - start;
+            long start = System.nanoTime();
+            BitMapData bitmapData = objects[0];
+            final ImageUtils.ColorAndBrightness colorAndBrightness = ImageUtils.getDominantColor(bitmapData.bitmap);
+            long statExtractTime = System.nanoTime() - start;
 
-                if (DEEP_DEBUG) {
-                    final String message = "Picture take time: " + TimeUnit.NANOSECONDS.toMillis(bitmapData.picTime) + "ms" +
-                            ", BitMap retrieval time: " + TimeUnit.NANOSECONDS.toMillis(bitmapData.bitmapTime) + "ms, " +
-                            "stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---" +
-                            " color = " + colorAndBrightness.getColor() + ", brightness= " + colorAndBrightness.getBrightness();
-                    Log.i("HueMatcher", message);
-                    if (captureState == CaptureState.STILL) {
-                        if (DEBUG) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(HueMatcherActivity.this, message, Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
+            if (DEEP_DEBUG) {
+                final String message = "Picture take time: " + TimeUnit.NANOSECONDS.toMillis(bitmapData.picDurationNs) + "ms" +
+                        ", BitMap retrieval time: " + TimeUnit.NANOSECONDS.toMillis(bitmapData.bitmapDurationNs) + "ms, " +
+                        "stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---" +
+                        " color = " + colorAndBrightness.getColor() + ", brightness= " + colorAndBrightness.getBrightness();
+                Log.i("HueMatcher", message);
+                if (isStill) {
+                    if (DEBUG) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(HueMatcherActivity.this, message, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 }
-
-                final int adjustedBrightness = Math.min(HueUtils.BRIGHTNESS_MAX, (int) (1.0 * colorAndBrightness.getBrightness() / brightnessScale * HueUtils.BRIGHTNESS_MAX));
-                final ImageUtils.ColorAndBrightness adjustedColorAndBrightness = new ImageUtils.ColorAndBrightness(colorAndBrightness.getColor(), adjustedBrightness);
-                if (captureState != CaptureState.OFF) {
-                    setLightsTo(adjustedColorAndBrightness);
-                }
-                return adjustedColorAndBrightness;
-            } finally {
-                HueMatcherActivity.this.start = System.nanoTime();
-                if (captureState == CaptureState.STILL) {
-                    captureState = CaptureState.OFF;
-                }
             }
+
+            final int adjustedBrightness = Math.min(HueUtils.BRIGHTNESS_MAX, (int) (1.0 * colorAndBrightness.getBrightness() / brightnessScale * HueUtils.BRIGHTNESS_MAX));
+            final ImageUtils.ColorAndBrightness adjustedColorAndBrightness = new ImageUtils.ColorAndBrightness(colorAndBrightness.getColor(), adjustedBrightness);
+            setLightsTo(adjustedColorAndBrightness);
+            return adjustedColorAndBrightness;
         }
 
         @Override
         protected void onPostExecute(ImageUtils.ColorAndBrightness adjustedColorAndBrightness) {
             sampleView.setBackgroundColor(adjustedColorAndBrightness.getColor());
             brightnessView.setText(NumberFormat.getIntegerInstance().format(adjustedColorAndBrightness.getBrightness()));
+
+            if (!isStill && prefs.getViewFPS()) {
+                double fps = lightFpsAverager.addSample(System.nanoTime() - processImageCallBackEnd);
+                light_fps.setText(NumberFormat.getNumberInstance().format(fps));
+            }
+            processImageCallBackEnd = System.nanoTime();
         }
     }
 
@@ -516,6 +552,11 @@ public class HueMatcherActivity extends AppCompatActivity {
             takeStillButton.setEnabled(true);
             takeContinuousButton.setImageResource(R.drawable.ic_videocam_black_24dp);
 
+            if (prefs.getViewFPS()) {
+                lights_fps_heads_up.setVisibility(View.GONE);
+            }
+
+
             // allow screen to turn off
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
@@ -524,6 +565,10 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void startContinuous(boolean force) {
         if (!checkLightsForCapture(force, CaptureState.CONTINUOUS)) return;
+        if (prefs.getViewFPS()) {
+            lights_fps_heads_up.setVisibility(View.VISIBLE);
+        }
+
         takeStillButton.setEnabled(false);
         takeContinuousButton.setImageResource(R.drawable.ic_stop_black_24dp);
         captureState = CaptureState.CONTINUOUS;
@@ -664,6 +709,12 @@ public class HueMatcherActivity extends AppCompatActivity {
             launchLightChooser();
         }
         transitionTimeHundredsOfMs = prefs.getTransitionTime();
+
+        if (!prefs.getViewFPS()) {
+            fps_heads_up.setVisibility(View.GONE);
+        } else {
+            fps_heads_up.setVisibility(View.VISIBLE);
+        }
 
         startBackgroundThread();
         if (textureView.isAvailable()) {

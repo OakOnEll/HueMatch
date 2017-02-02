@@ -13,6 +13,7 @@ public class HueSharedPreferences {
     private static final String LAST_CONNECTED_USERNAME = "LastConnectedUsername";
     private static final String LAST_CONNECTED_IP = "LastConnectedIP";
     private static final String TRANSITION_TIME = "transitionTime";
+    private static final String VIEW_FPS = "viewFPS";
     private static final int DEFAULT_TRANSITION_TIME = 4;
 
 
@@ -72,5 +73,15 @@ public class HueSharedPreferences {
         mSharedPreferencesEditor.putInt(TRANSITION_TIME, timeMs);
         return mSharedPreferencesEditor.commit();
     }
+
+    public boolean getViewFPS() {
+        return mSharedPreferences.getBoolean(VIEW_FPS, false);
+    }
+
+    public boolean setViewFPS(boolean value) {
+        mSharedPreferencesEditor.putBoolean(VIEW_FPS, value);
+        return mSharedPreferencesEditor.commit();
+    }
+
 
 }

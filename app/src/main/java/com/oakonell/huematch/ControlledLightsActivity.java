@@ -53,6 +53,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
     private TextView transition_time;
     private SeekBar transition_time_seek;
+    private CheckBox view_fps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +104,8 @@ public class ControlledLightsActivity extends AppCompatActivity {
         transition_time = (TextView) findViewById(R.id.transition_time);
         transition_time_seek = (SeekBar) findViewById(R.id.transition_time_seek);
 
+        view_fps = (CheckBox) findViewById(R.id.view_fps);
+
         bridgeNameView = (TextView) findViewById(R.id.bridge_name);
 
         lightsListView = (RecyclerView) findViewById(R.id.lights_list);
@@ -124,6 +127,8 @@ public class ControlledLightsActivity extends AppCompatActivity {
                 // save the transition time
                 int transitionTime = transition_time_seek.getProgress();
                 prefs.setTransitionTime(transitionTime);
+
+                prefs.setViewFPS(view_fps.isChecked());
 
                 finish();
             }
@@ -182,6 +187,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
             }
         });
 
+        view_fps.setChecked(prefs.getViewFPS());
 
         // setup controlled lights
         Set<String> controlledIds = prefs.getControlledLightIds();

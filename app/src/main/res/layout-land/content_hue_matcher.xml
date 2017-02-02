@@ -8,12 +8,28 @@
     android:orientation="horizontal"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <com.oakonell.huematch.utils.AutoFitTextureView
-        android:id="@+id/texture"
+    <RelativeLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_weight="4" />
+        android:layout_weight="4">
+
+        <com.oakonell.huematch.utils.AutoFitTextureView
+            android:id="@+id/texture"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center" />
+
+        <include
+            layout="@layout/fps_heads_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="@dimen/text_margin" />
+
+    </RelativeLayout>
 
     <LinearLayout
         android:layout_width="0dp"

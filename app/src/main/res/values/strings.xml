@@ -46,6 +46,9 @@
     <string name="trial_expired_not_purchased_app_close">Purchase not completed, app will close.</string>
     <string name="title_thanks">Thanks</string>
     <string name="thanks_for_purchasing">Thanks for purchasing Hue Matcher!</string>
+    <string name="show_framerate">Show Framerate</string>
+    <string name="cam_fps_label">Cam FPS:</string>
+    <string name="light_fps_label">Lght FPS:</string>
 
     <plurals name="trial_over">
         <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>

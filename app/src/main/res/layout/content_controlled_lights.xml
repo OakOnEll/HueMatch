@@ -81,6 +81,12 @@
         </LinearLayout>
     </LinearLayout>
 
+    <CheckBox
+        android:text="@string/show_framerate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/view_fps" />
+
     <LinearLayout
         android:id="@+id/bridge_group"
         android:layout_width="match_parent"
