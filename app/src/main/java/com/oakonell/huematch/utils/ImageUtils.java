@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;

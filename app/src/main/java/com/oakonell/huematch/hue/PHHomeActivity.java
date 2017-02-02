@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.hue;
 
 import android.content.Intent;
 import android.os.Build;
@@ -13,6 +13,9 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
 import com.crashlytics.android.Crashlytics;
+import com.oakonell.huematch.HueMatcherActivity;
+import com.oakonell.huematch.HueSharedPreferences;
+import com.oakonell.huematch.R;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHBridgeSearchManager;
 import com.philips.lighting.hue.sdk.PHHueSDK;

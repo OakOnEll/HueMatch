@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.utils;
 
 /*
  * Copyright 2014 The Android Open Source Project

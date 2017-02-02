@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.hue;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.view.WindowManager;
+
+import com.oakonell.huematch.R;
 
 /**
  * Generic class for Alert and Progress dialogs wizard

@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.hue;
 
 
 import android.annotation.SuppressLint;
@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.oakonell.huematch.R;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.model.PHBridge;

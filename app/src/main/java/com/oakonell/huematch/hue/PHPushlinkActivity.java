@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.hue;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.ProgressBar;
 
 import com.crashlytics.android.Crashlytics;
+import com.oakonell.huematch.R;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.hue.sdk.PHMessageType;

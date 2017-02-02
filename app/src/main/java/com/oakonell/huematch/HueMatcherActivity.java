@@ -55,6 +55,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+import com.oakonell.huematch.utils.AutoFitTextureView;
+import com.oakonell.huematch.utils.HueUtils;
+import com.oakonell.huematch.utils.ImageUtils;
+import com.oakonell.huematch.utils.LicenseUtils;
 import com.philips.lighting.hue.listener.PHLightListener;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.model.PHBridge;

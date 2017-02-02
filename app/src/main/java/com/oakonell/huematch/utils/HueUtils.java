@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.utils;
 
 import com.philips.lighting.hue.sdk.utilities.PHUtilities;
 import com.philips.lighting.model.PHLight;

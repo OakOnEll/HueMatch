@@ -1,4 +1,4 @@
-package com.oakonell.huematch;
+package com.oakonell.huematch.utils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import com.oakonell.huematch.R;
 import com.oakonell.huematch.iab.IabException;
 import com.oakonell.huematch.iab.IabHelper;
 import com.oakonell.huematch.iab.IabResult;
@@ -38,7 +39,7 @@ public class LicenseUtils {
 
     private ConnectState connectState = ConnectState.CONNECTING;
 
-    interface LicenseStartupListener {
+    public interface LicenseStartupListener {
         void onSuccess();
 
         void onFailure();
@@ -268,7 +269,7 @@ public class LicenseUtils {
         return helper.handleActivityResult(requestCode, resultCode, data);
     }
 
-    interface ConsumeListener {
+    public interface ConsumeListener {
         void onSuccess();
 
         void onError(IabResult result);
@@ -315,7 +316,7 @@ public class LicenseUtils {
         }
     }
 
-    interface PurchaseListener {
+    public interface PurchaseListener {
         void onPurchase();
 
         void onNotPurchased();
