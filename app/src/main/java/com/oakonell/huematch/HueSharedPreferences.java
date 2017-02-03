@@ -14,6 +14,7 @@ public class HueSharedPreferences {
     private static final String LAST_CONNECTED_IP = "LastConnectedIP";
     private static final String TRANSITION_TIME = "transitionTime";
     private static final String VIEW_FPS = "viewFPS";
+    private static final String DEBUGABBLE = "debuggable";
     private static final int DEFAULT_TRANSITION_TIME = 4;
 
 
@@ -83,5 +84,13 @@ public class HueSharedPreferences {
         return mSharedPreferencesEditor.commit();
     }
 
+    public boolean getDebuggable() {
+        return mSharedPreferences.getBoolean(DEBUGABBLE, false);
+    }
+
+    public boolean setDebuggable(boolean value) {
+        mSharedPreferencesEditor.putBoolean(DEBUGABBLE, value);
+        return mSharedPreferencesEditor.commit();
+    }
 
 }

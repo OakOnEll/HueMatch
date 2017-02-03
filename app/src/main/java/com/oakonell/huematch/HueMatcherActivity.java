@@ -302,12 +302,10 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     private void processCapturedImage(final long picDurationNs, long startTimeNs) {
-        if (captureState == CaptureState.OFF) return;
-
         if (processImageTask != null && processImageTask.getStatus() != AsyncTask.Status.FINISHED)
             return;
 
-        boolean isStill = captureState == CaptureState.STILL;
+        CaptureState currentCaptureState = captureState;
         if (captureState == CaptureState.STILL) {
             captureState = CaptureState.OFF;
         }
@@ -320,17 +318,17 @@ public class HueMatcherActivity extends AppCompatActivity {
         data.bitmapDurationNs = bitmapDuration;
         data.picDurationNs = picDurationNs;
 
-        processImageTask = new ProcessImageTask(isStill);
+        processImageTask = new ProcessImageTask(currentCaptureState);
         processImageTask.execute(data);
     }
 
     long processImageCallBackEnd = System.nanoTime();
 
     class ProcessImageTask extends AsyncTask<BitMapData, Object, ImageUtils.ColorAndBrightness> {
-        boolean isStill;
+        private final CaptureState captureState;
 
-        ProcessImageTask(boolean isStill) {
-            this.isStill = isStill;
+        ProcessImageTask(CaptureState captureState) {
+            this.captureState = captureState;
         }
 
         @Override
@@ -346,7 +344,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                         "stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---" +
                         " color = " + colorAndBrightness.getColor() + ", brightness= " + colorAndBrightness.getBrightness();
                 Log.i("HueMatcher", message);
-                if (isStill) {
+                if (captureState == CaptureState.STILL) {
                     if (DEBUG) {
                         runOnUiThread(new Runnable() {
                             @Override
@@ -360,7 +358,9 @@ public class HueMatcherActivity extends AppCompatActivity {
 
             final int adjustedBrightness = Math.min(HueUtils.BRIGHTNESS_MAX, (int) (1.0 * colorAndBrightness.getBrightness() / brightnessScale * HueUtils.BRIGHTNESS_MAX));
             final ImageUtils.ColorAndBrightness adjustedColorAndBrightness = new ImageUtils.ColorAndBrightness(colorAndBrightness.getColor(), adjustedBrightness);
-            setLightsTo(adjustedColorAndBrightness);
+            if (captureState != CaptureState.OFF) {
+                setLightsTo(adjustedColorAndBrightness);
+            }
             return adjustedColorAndBrightness;
         }
 
@@ -369,7 +369,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             sampleView.setBackgroundColor(adjustedColorAndBrightness.getColor());
             brightnessView.setText(NumberFormat.getIntegerInstance().format(adjustedColorAndBrightness.getBrightness()));
 
-            if (!isStill && prefs.getViewFPS()) {
+            if (captureState == CaptureState.CONTINUOUS && prefs.getViewFPS()) {
                 double fps = lightFpsAverager.addSample(System.nanoTime() - processImageCallBackEnd);
                 light_fps.setText(NumberFormat.getNumberInstance().format(fps));
             }

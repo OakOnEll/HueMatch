@@ -7,14 +7,14 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class RunningFPSAverager {
-    private final int MAXSAMPLES = 100;
+    public static final int MAXSAMPLES = 100;
+    private final static long NANOS_PER_SECOND = TimeUnit.SECONDS.toNanos(1);
 
     private int sampleIndex = 0;
     private long sampleSum = 0;
     private long samples[] = new long[MAXSAMPLES];
     private double currentAvg;
     private int numsamples = 0;
-    private final static long NANOS_PER_SECOND = TimeUnit.SECONDS.toNanos(1);
 
 /* need to zero out the samples array before starting */
 /* average will ramp up until the buffer is full */

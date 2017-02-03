@@ -189,6 +189,13 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
         view_fps.setChecked(prefs.getViewFPS());
 
+        if (HueMatcherActivity.DEBUG || prefs.getDebuggable()) {
+            view_fps.setVisibility(View.VISIBLE);
+        } else {
+            view_fps.setVisibility(View.GONE);
+        }
+
+
         // setup controlled lights
         Set<String> controlledIds = prefs.getControlledLightIds();
 

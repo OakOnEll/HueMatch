@@ -1,7 +1,11 @@
 package com.oakonell.huematch;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -29,6 +33,8 @@ public class AboutActivity
     private static final String TAG = "AboutActivity";
     private final LicenseUtils licenseUtils = new LicenseUtils();
     private final CountDownLatch licenseServiceLatch = new CountDownLatch(1);
+    private HueSharedPreferences prefs;
+    private int clickCount;
 
     @Override
     protected CharSequence getActivityTitle() {
@@ -37,6 +43,7 @@ public class AboutActivity
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        prefs = HueSharedPreferences.getInstance(this);
         super.onCreate(savedInstanceState);
         licenseUtils.onCreateBind(this, new LicenseUtils.LicenseStartupListener() {
             @Override
@@ -67,9 +74,45 @@ public class AboutActivity
 
         appCardBuilder.addItem(ConvenienceBuilder.createAppTitleItem(context));
         try {
-            appCardBuilder.addItem(ConvenienceBuilder.createVersionActionItem(context, context.getDrawable(R.drawable.ic_information_black_24dp),
-                    getString(R.string.about_version),
-                    false));
+            int text = R.string.about_version;
+            if (prefs.getDebuggable()) {
+                text = R.string.about_version_debug;
+            }
+
+            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            String versionName = pInfo.versionName;
+            int versionCode = pInfo.versionCode;
+            boolean includeVersionCode = false;
+            MaterialAboutActionItem item = (new MaterialAboutActionItem.Builder())
+                    .text(text)
+                    .subText(versionName + (includeVersionCode ? " (" + versionCode + ")" : ""))
+                    .icon(context.getDrawable(R.drawable.ic_information_black_24dp))
+                    .setOnClickListener(new MaterialAboutActionItem.OnClickListener() {
+                        @Override
+                        public void onClick() {
+                            clickCount++;
+                            if (clickCount > 6) {
+                                prefs.setDebuggable(!prefs.getDebuggable());
+                            } else {
+                                return;
+                            }
+                            Runnable continuation = new Runnable() {
+                                @Override
+                                public void run() {
+                                    reloadActivity();
+                                }
+                            };
+                            if (prefs.getDebuggable()) {
+                                showMessage(AboutActivity.this, "Debug", "Debug features turned on.", continuation);
+                            } else {
+                                prefs.setViewFPS(false);
+                                showMessage(AboutActivity.this, "Debug", "Debug features turned off.", continuation);
+                            }
+                        }
+                    }).
+                            build();
+
+            appCardBuilder.addItem(item);
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Error adding version card");
         }
@@ -103,10 +146,7 @@ public class AboutActivity
                                     @Override
                                     public void onPurchase() {
                                         // redisplay the about activity to change this action item
-                                        // TODO test this
-                                        Intent intent = new Intent(AboutActivity.this, AboutActivity.class);
-                                        AboutActivity.this.startActivity(intent);
-                                        finish();
+                                        reloadActivity();
                                     }
 
                                     @Override
@@ -171,8 +211,15 @@ public class AboutActivity
         return new MaterialAboutList(appCardBuilder.build(), authorCardBuilder.build(), convenienceCardBuilder.build());
     }
 
+    private void reloadActivity() {
+        finish();
+
+        Intent intent = new Intent(AboutActivity.this, AboutActivity.class);
+        AboutActivity.this.startActivity(intent);
+    }
+
     private void addConsumeItem(MaterialAboutCard.Builder appCardBuilder) {
-        if (!HueMatcherActivity.DEBUG) return;
+        if (!HueMatcherActivity.DEBUG && !prefs.getDebuggable()) return;
 
         MaterialAboutActionItem consume = new MaterialAboutActionItem.Builder()
                 .text("Debug/Test - consume full-app purchase")
@@ -185,9 +232,7 @@ public class AboutActivity
                                 licenseUtils.showMessage(AboutActivity.this, "Consumed", "Purchase was consumed", new Runnable() {
                                     @Override
                                     public void run() {
-                                        Intent intent = new Intent(AboutActivity.this, AboutActivity.class);
-                                        AboutActivity.this.startActivity(intent);
-                                        finish();
+                                        reloadActivity();
                                     }
                                 });
                             }
@@ -221,4 +266,35 @@ public class AboutActivity
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    public void showMessage(Activity activity, String title, String text, final Runnable onDone) {
+        // 1. Instantiate an AlertDialog.Builder with its constructor
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+
+// 2. Chain together various setter methods to set the dialog characteristics
+        builder.setMessage(text)
+                .setTitle(title)
+                .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        dialog.dismiss();
+                        if (onDone != null) {
+                            onDone.run();
+                        }
+                    }
+                })
+                .setPositiveButton(R.string.btn_ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        if (onDone != null) {
+                            onDone.run();
+                        }
+                    }
+                })
+        ;
+
+// 3. Get the AlertDialog from create()
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 }

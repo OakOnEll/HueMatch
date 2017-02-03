@@ -1,3 +1,6 @@
+v1.11
+ Fix sample update
+ remove debug/fps- debug only
 v1.10
  Optimize camera capture
  add FPS display
