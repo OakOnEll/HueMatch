@@ -12,7 +12,7 @@ public class RunningFPSAverager {
 
     private int sampleIndex = 0;
     private long sampleSum = 0;
-    private long samples[] = new long[MAXSAMPLES];
+    private final long samples[] = new long[MAXSAMPLES];
     private double currentAvg;
     private int numsamples = 0;
 
