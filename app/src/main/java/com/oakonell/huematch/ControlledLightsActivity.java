@@ -130,6 +130,8 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
                 prefs.setViewFPS(view_fps.isChecked());
 
+                setResult(RESULT_OK);
+
                 finish();
             }
         });
@@ -138,6 +140,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // exit without making any changes
+                setResult(RESULT_CANCELED);
                 finish();
             }
         });

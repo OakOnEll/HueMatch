@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @author SteveyO.
  */
-public class AccessPointListAdapter extends BaseAdapter {
+class AccessPointListAdapter extends BaseAdapter {
     private final LayoutInflater mInflater;
     private final PHHueSDK hueSdk;
     private List<PHAccessPoint> accessPoints;

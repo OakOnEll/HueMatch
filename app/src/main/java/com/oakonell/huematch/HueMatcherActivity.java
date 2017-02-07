@@ -59,10 +59,13 @@ import com.oakonell.huematch.utils.ImageUtils;
 import com.oakonell.huematch.utils.LicenseUtils;
 import com.oakonell.huematch.utils.RunningFPSAverager;
 import com.philips.lighting.hue.listener.PHLightListener;
+import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
+import com.philips.lighting.hue.sdk.PHSDKListener;
 import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHBridgeResource;
 import com.philips.lighting.model.PHHueError;
+import com.philips.lighting.model.PHHueParsingError;
 import com.philips.lighting.model.PHLight;
 import com.philips.lighting.model.PHLightState;
 
@@ -98,10 +101,12 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private static final boolean DEEP_DEBUG = false;
+    private static final int REQUEST_CODE_CONFIG = 101;
 
     private Size mPreviewSize;
     private HueSharedPreferences prefs;
     private Set<String> controlledIds;
+    private Set<String> currentSessionLightIds;
     private boolean autostartContinuous;
     private float finger_spacing;
     private int zoom_level;
@@ -112,6 +117,39 @@ public class HueMatcherActivity extends AppCompatActivity {
     private View lights_fps_heads_up;
     private TextView cam_fps;
     private TextView light_fps;
+
+    public PHHueSDK getPhHueSDK() {
+        return phHueSDK;
+    }
+
+    public Set<String> getControlledIds() {
+        return controlledIds;
+    }
+
+    public Set<String> getCurrentSessionLightIds() {
+        if (currentSessionLightIds != null) return currentSessionLightIds;
+        return controlledIds;
+    }
+
+    public BridgeUpdateListener getBridgeUpdateListener() {
+        return bridgeUpdateListener;
+    }
+
+    public void setBridgeUpdateListener(BridgeUpdateListener bridgeUpdateListener) {
+        this.bridgeUpdateListener = bridgeUpdateListener;
+    }
+
+    public void setCurrentSessionLights(Collection<PHLight> currentSessionLights) {
+        if (currentSessionLights.size() == controlledIds.size()) {
+            this.currentSessionLightIds = null;
+            return;
+        }
+        currentSessionLightIds = new HashSet<>();
+        for (PHLight each : currentSessionLights) {
+            currentSessionLightIds.add(each.getIdentifier());
+        }
+    }
+
 
     enum CaptureState {
         OFF, STILL, CONTINUOUS
@@ -174,6 +212,9 @@ public class HueMatcherActivity extends AppCompatActivity {
         licenseUtils.onCreateBind(this, null);
 
         phHueSDK = PHHueSDK.create();
+
+        phHueSDK.getNotificationManager().registerSDKListener(phsdkListener);
+
 
         fps_heads_up = findViewById(R.id.fps_heads_up);
         cam_fps = (TextView) findViewById(R.id.cam_fps);
@@ -254,22 +295,21 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     }
 
-    private RunningFPSAverager camFpsAverager = new RunningFPSAverager();
-    private RunningFPSAverager lightFpsAverager = new RunningFPSAverager();
+    private final RunningFPSAverager camFpsAverager = new RunningFPSAverager();
+    private final RunningFPSAverager lightFpsAverager = new RunningFPSAverager();
 
-    long captureCallBackStart;
-    long captureCallBackEnd = System.nanoTime();
+    private long captureCallBackEnd = System.nanoTime();
     private final CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
-            captureCallBackStart = System.nanoTime();
+            long captureCallBackStart = System.nanoTime();
             long picDuration = captureCallBackStart - captureCallBackEnd;
             if (DEEP_DEBUG) {
                 Log.i("Camera2", "capture completed -pic preview time " + TimeUnit.NANOSECONDS.toMillis(picDuration) + "ms");
             }
 
-            processCapturedImage(picDuration, captureCallBackEnd);
+            processCapturedImage(picDuration);
             if (prefs.getViewFPS()) {
                 final double fps = camFpsAverager.addSample(System.nanoTime() - captureCallBackEnd);
                 runOnUiThread(new Runnable() {
@@ -301,7 +341,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         long picDurationNs;
     }
 
-    private void processCapturedImage(final long picDurationNs, long startTimeNs) {
+    private void processCapturedImage(final long picDurationNs) {
         if (processImageTask != null && processImageTask.getStatus() != AsyncTask.Status.FINISHED)
             return;
 
@@ -322,7 +362,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         processImageTask.execute(data);
     }
 
-    long processImageCallBackEnd = System.nanoTime();
+    private long processImageCallBackEnd = System.nanoTime();
 
     class ProcessImageTask extends AsyncTask<BitMapData, Object, ImageUtils.ColorAndBrightness> {
         private final CaptureState captureState;
@@ -451,13 +491,13 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     @DebugLog
-    private void takeStill(boolean force) {
-        if (!checkLightsForCapture(force, CaptureState.STILL)) return;
+    protected void takeStill(boolean skipLightValidation) {
+        if (!skipLightValidation && lightsHaveProblems(CaptureState.STILL)) return;
         captureState = CaptureState.STILL;
     }
 
     @DebugLog
-    private boolean checkLightsForCapture(boolean force, CaptureState captureType) {
+    private boolean lightsHaveProblems(CaptureState captureType) {
         PHBridge bridge = phHueSDK.getSelectedBridge();
         Map<String, PHLight> lightsMap = bridge.getResourceCache().getLights();
 
@@ -466,105 +506,54 @@ public class HueMatcherActivity extends AppCompatActivity {
         // assure that at least one light is reachable/on
         Collection<PHLight> offLights = new HashSet<>();
         Collection<PHLight> unreachableLights = new HashSet<>();
-        // TODO more stringent light access check, make sure at least one OK light
         Collection<PHLight> okLights = new HashSet<>();
-
-        StringBuilder offLightsBuilder = new StringBuilder();
-        StringBuilder unreachableLightsBuilder = new StringBuilder();
-
 
         for (String id : controlledIds) {
             PHLight light = lightsMap.get(id);
             final PHLightState state = light.getLastKnownLightState();
-//            bridge.updateLight(light, new PHLightListener() {
-//                @Override
-//                public void onReceivingLightDetails(PHLight phLight) {
-//
-//                }
-//
-//                @Override
-//                public void onReceivingLights(List<PHBridgeResource> list) {
-//
-//                }
-//
-//                @Override
-//                public void onSearchComplete() {
-//
-//                }
-//
-//                @Override
-//                public void onSuccess() {
-//
-//                }
-//
-//                @Override
-//                public void onError(int i, String s) {
-//
-//                }
-//
-//                @Override
-//                public void onStateUpdate(Map<String, String> map, List<PHHueError> list) {
-//
-//                }
-//            });
             if (!state.isOn()) {
-                if (!offLights.isEmpty()) {
-                    offLightsBuilder.append(", ");
-                }
-                offLightsBuilder.append(light.getName());
                 offLights.add(light);
             } else if (!state.isReachable()) {
-                if (!unreachableLights.isEmpty()) {
-                    unreachableLightsBuilder.append(", ");
-                }
-                unreachableLightsBuilder.append(light.getName());
                 unreachableLights.add(light);
             } else {
                 okLights.add(light);
             }
         }
-        if (force && !offLights.isEmpty()) {
-            for (PHLight each : offLights) {
-                PHLightState state = new PHLightState();
-                state.setOn(true);
-                // TODO listen to the state update..
-                bridge.updateLightState(each, state);
-            }
-            offLights.clear();
-        }
-        if (!force && !unreachableLights.isEmpty() || !offLights.isEmpty()) {
-            // TODO language strings
-            final SomeLightsOffDialog dialog = SomeLightsOffDialog.newInstance("Some lights are off(" +
-                    offLightsBuilder.toString() + ") or unreachable(" + unreachableLightsBuilder.toString() + ")\n" +
-                    "Turn on lights, and ignore unreachable", captureType);
+        if (!offLights.isEmpty() || !unreachableLights.isEmpty() || okLights.isEmpty()) {
+            LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(captureType, false);
             dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
-            return false;
+            return true;
         }
-        return true;
+
+        return false;
     }
 
     @DebugLog
-    private void takeContinuous(boolean force) {
+    protected void takeContinuous(boolean force) {
         if (captureState == CaptureState.OFF) {
             startContinuous(force);
         } else {
-            captureState = CaptureState.OFF;
-            takeStillButton.setEnabled(true);
-            takeContinuousButton.setImageResource(R.drawable.ic_videocam_black_24dp);
-
-            if (prefs.getViewFPS()) {
-                lights_fps_heads_up.setVisibility(View.GONE);
-            }
-
-
-            // allow screen to turn off
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            stopContinuous();
         }
     }
 
+    private void stopContinuous() {
+        captureState = CaptureState.OFF;
+        takeStillButton.setEnabled(true);
+        takeContinuousButton.setImageResource(R.drawable.ic_videocam_black_24dp);
+
+        if (prefs.getViewFPS()) {
+            lights_fps_heads_up.setVisibility(View.GONE);
+        }
+
+
+        // allow screen to turn off
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
     @DebugLog
-    private void startContinuous(boolean force) {
-        if (!checkLightsForCapture(force, CaptureState.CONTINUOUS)) return;
+    private void startContinuous(boolean skipLightValidation) {
+        if (!skipLightValidation && lightsHaveProblems(CaptureState.CONTINUOUS)) return;
         if (prefs.getViewFPS()) {
             lights_fps_heads_up.setVisibility(View.VISIBLE);
         }
@@ -579,11 +568,8 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     @DebugLog
     private void createCameraPreview() {
-        int imageFormat = ImageFormat.YUV_420_888;
         try {
             CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-
 
             SurfaceTexture texture = textureView.getSurfaceTexture();
             Surface surface = new Surface(texture);
@@ -722,6 +708,8 @@ public class HueMatcherActivity extends AppCompatActivity {
         } else {
             textureView.setSurfaceTextureListener(textureListener);
         }
+        Log.i(TAG, "Starting heartbeat to update cache");
+        phHueSDK.enableHeartbeat(phHueSDK.getSelectedBridge(), 2000);
     }
 
     @Override
@@ -734,6 +722,8 @@ public class HueMatcherActivity extends AppCompatActivity {
             processImageTask.cancel(true);
             processImageTask = null;
         }
+        phHueSDK.disableHeartbeat(phHueSDK.getSelectedBridge());
+
         super.onPause();
     }
 
@@ -748,10 +738,10 @@ public class HueMatcherActivity extends AppCompatActivity {
             if (phHueSDK.isHeartbeatEnabled(bridge)) {
                 phHueSDK.disableHeartbeat(bridge);
             }
-
-            phHueSDK.disconnect(bridge);
+            phHueSDK.getNotificationManager().unregisterSDKListener(phsdkListener);
         }
     }
+
 
     @DebugLog
     private void setLightsTo(ImageUtils.ColorAndBrightness colorAndBrightness) {
@@ -759,7 +749,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         Map<String, PHLight> lightsMap = bridge.getResourceCache().getLights();
 
 
-        for (String id : controlledIds) {
+        for (String id : getCurrentSessionLightIds()) {
             PHLight light = lightsMap.get(id);
             if (light == null) {
                 Log.e(TAG, "No light with id '" + id + "' was found!");
@@ -782,14 +772,14 @@ public class HueMatcherActivity extends AppCompatActivity {
                 lightState.setX(xy[0]);
                 lightState.setY(xy[1]);
             }
-            bridge.updateLightState(light, lightState, listener);
+            bridge.updateLightState(light, lightState, lightListener);
             //  bridge.updateLightState(light, lightState);   // If no bridge response is required then use this simpler form.
         }
 
     }
 
     // If you want to handle the response from the bridge, create a PHLightListener object.
-    private final PHLightListener listener = new PHLightListener() {
+    private final PHLightListener lightListener = new PHLightListener() {
 
         @Override
         public void onSuccess() {
@@ -830,11 +820,16 @@ public class HueMatcherActivity extends AppCompatActivity {
                 return;
             }
             Log.e(TAG, "Received light error:" + arg0 + "-" + arg1);
-            if (!DEBUG) return;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(HueMatcherActivity.this, "Light error: " + arg0 + " - " + arg1, Toast.LENGTH_SHORT).show();
+                    if (captureState == CaptureState.CONTINUOUS) {
+                        stopContinuous();
+                        LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(CaptureState.CONTINUOUS, true);
+                        dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
+                    } else {
+                        Toast.makeText(HueMatcherActivity.this, "Light error: " + arg0 + " - " + arg1, Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
@@ -1048,55 +1043,6 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
 
-    public static class SomeLightsOffDialog extends DialogFragment {
-
-        private static final String ARG_MESSAGE = "message";
-        private static final String ARG_TYPE = "type";
-
-        public static SomeLightsOffDialog newInstance(String message, CaptureState state) {
-            SomeLightsOffDialog dialog = new SomeLightsOffDialog();
-            Bundle args = new Bundle();
-            args.putString(ARG_MESSAGE, message);
-            args.putString(ARG_TYPE, state.toString());
-            dialog.setArguments(args);
-            return dialog;
-        }
-
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(@NonNull Bundle savedInstanceState) {
-            final HueMatcherActivity activity = (HueMatcherActivity) getActivity();
-
-            String typeName = getArguments().getString(ARG_TYPE);
-            final String message = getArguments().getString(ARG_MESSAGE);
-
-            final CaptureState type = CaptureState.valueOf(typeName);
-
-            return new AlertDialog.Builder(activity)
-                    .setTitle(R.string.light_issues_dialog)
-                    .setMessage(message)
-                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dismiss();
-                            if (type == CaptureState.STILL) {
-                                activity.takeStill(true);
-                                return;
-                            }
-                            activity.takeContinuous(true);
-                        }
-                    })
-                    .setNegativeButton(R.string.btn_cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dismiss();
-                        }
-                    })
-                    .create();
-        }
-
-    }
-
     @Override
     @DebugLog
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -1130,7 +1076,8 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void launchLightChooser() {
         Intent intent = new Intent(getApplicationContext(), ControlledLightsActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_CODE_CONFIG);
+//        startActivity(intent);
     }
 
 
@@ -1228,9 +1175,78 @@ public class HueMatcherActivity extends AppCompatActivity {
         // not handled, so handle it ourselves (here's where you'd
         // perform any handling of activity results not related to in-app
         // billing...
+        if (requestCode == REQUEST_CODE_CONFIG) {
+            if (resultCode == ControlledLightsActivity.RESULT_OK) {
+                currentSessionLightIds = null;
+            }
+            return;
+        }
+
         Log.d(TAG, "onActivityResult not handled by IABUtil.");
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+
+    interface BridgeUpdateListener {
+        void onCacheUpdated();
+    }
+
+    private BridgeUpdateListener bridgeUpdateListener;
+
+    private final PHSDKListener phsdkListener = new PHSDKListener() {
+        long lastUpdate = System.currentTimeMillis();
+
+        @Override
+        public void onCacheUpdated(List<Integer> list, PHBridge phBridge) {
+            Log.i(TAG, "cache update");
+            if (!phBridge.getResourceCache().getBridgeConfiguration().getBridgeID().equals(phHueSDK.getSelectedBridge().getResourceCache().getBridgeConfiguration().getBridgeID())) {
+                return;
+            }
+
+            long start = lastUpdate;
+            lastUpdate = System.currentTimeMillis();
+
+            Log.i(TAG, "Cache updated in " + (lastUpdate - start) + " ms: list=" + list.toString());
+            final Map<String, Long> lastHeartbeat = phHueSDK.getLastHeartbeat();
+            if (bridgeUpdateListener != null) {
+                bridgeUpdateListener.onCacheUpdated();
+            }
+        }
+
+        @Override
+        public void onBridgeConnected(PHBridge phBridge, String s) {
+
+        }
+
+        @Override
+        public void onAuthenticationRequired(PHAccessPoint phAccessPoint) {
+
+        }
+
+        @Override
+        public void onAccessPointsFound(List<PHAccessPoint> list) {
+
+        }
+
+        @Override
+        public void onError(int i, String s) {
+
+        }
+
+        @Override
+        public void onConnectionResumed(PHBridge phBridge) {
+
+        }
+
+        @Override
+        public void onConnectionLost(PHAccessPoint phAccessPoint) {
+
+        }
+
+        @Override
+        public void onParsingErrors(List<PHHueParsingError> list) {
+
+        }
+    };
 
 }

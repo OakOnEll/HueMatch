@@ -50,6 +50,10 @@
     <string name="show_framerate">Show Framerate</string>
     <string name="cam_fps_label">Cam FPS:</string>
     <string name="light_fps_label">Lght FPS:</string>
+    <string name="turn_on_lights">Turn on Lights</string>
+    <string name="lights_not_available">Some lights are not available:</string>
+    <string name="lights_that_are_unreachable">Lights that are unreachable</string>
+    <string name="lights_that_are_off">Lights that are off</string>
 
     <plurals name="trial_over">
         <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>

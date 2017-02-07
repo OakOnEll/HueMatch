@@ -266,7 +266,7 @@ public class AboutActivity
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    public void showMessage(Activity activity, String title, String text, final Runnable onDone) {
+    private void showMessage(Activity activity, String title, String text, final Runnable onDone) {
         // 1. Instantiate an AlertDialog.Builder with its constructor
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 

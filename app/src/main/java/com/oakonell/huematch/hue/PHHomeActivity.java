@@ -50,6 +50,7 @@ public class PHHomeActivity extends AppCompatActivity implements OnItemClickList
     private AccessPointListAdapter adapter;
 
     private boolean lastSearchWasIPScan = false;
+    private boolean mainActivityStarted;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -252,7 +253,9 @@ public class PHHomeActivity extends AppCompatActivity implements OnItemClickList
     public void onDestroy() {
         super.onDestroy();
         phHueSDK.getNotificationManager().unregisterSDKListener(listener);
-        phHueSDK.disableAllHeartbeat();
+        if (!mainActivityStarted) {
+            phHueSDK.disableAllHeartbeat();
+        }
     }
 
     @Override
@@ -287,6 +290,7 @@ public class PHHomeActivity extends AppCompatActivity implements OnItemClickList
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
             intent.addFlags(0x8000); // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
+        mainActivityStarted = true;
         startActivity(intent);
     }
 
