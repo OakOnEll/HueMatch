@@ -385,9 +385,8 @@ public class ControlledLightsActivity extends AppCompatActivity {
                     controllable = false;
                     break;
                 case CT_LIGHT:
-                    // TODO perhaps a CT bulb can be handled?
-                    imageResource = R.drawable.dimming_bulb;
-                    controllable = false;
+                    imageResource = R.drawable.dimming_ct_bulb;
+                    controllable = true;
                     break;
                 case COLOR_LIGHT:
                 case CT_COLOR_LIGHT:

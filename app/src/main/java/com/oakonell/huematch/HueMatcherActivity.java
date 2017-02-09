@@ -756,22 +756,28 @@ public class HueMatcherActivity extends AppCompatActivity {
                 continue;
             }
             PHLightState lightState = new PHLightState();
+            // API takes in 100s of ms, not ms itself.
+            lightState.setTransitionTime(transitionTimeHundredsOfMs);
 
 
-            if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT ||
-                    light.getLightType() == PHLight.PHLightType.DIM_LIGHT || light.getLightType() == PHLight.PHLightType.CT_LIGHT) {
+            final PHLight.PHLightType lightType = light.getLightType();
+            if (lightType == PHLight.PHLightType.CT_COLOR_LIGHT || lightType == PHLight.PHLightType.COLOR_LIGHT ||
+                    lightType == PHLight.PHLightType.DIM_LIGHT || lightType == PHLight.PHLightType.CT_LIGHT) {
                 lightState.setBrightness(colorAndBrightness.getBrightness());
+            }
+
+            float[] xy = HueUtils.colorToXY(colorAndBrightness.getColor(), light);
+            if (lightType == PHLight.PHLightType.CT_LIGHT) {
+                int ct = HueUtils.xyToTemperature(xy);
+                lightState.setCt((int) ct, true);
+            } else if (lightType == PHLight.PHLightType.CT_COLOR_LIGHT || lightType == PHLight.PHLightType.COLOR_LIGHT) {
+                lightState.setX(xy[0]);
+                lightState.setY(xy[1]);
             }
 
             // To validate your lightstate is valid (before sending to the bridge) you can use:
             // String validState = lightState.validateState();
-            // API takes in 100s of ms, not ms itself.
-            lightState.setTransitionTime(transitionTimeHundredsOfMs);
-            if (light.getLightType() == PHLight.PHLightType.CT_COLOR_LIGHT || light.getLightType() == PHLight.PHLightType.COLOR_LIGHT) {
-                float[] xy = HueUtils.colorToXY(colorAndBrightness.getColor(), light);
-                lightState.setX(xy[0]);
-                lightState.setY(xy[1]);
-            }
+
             bridge.updateLightState(light, lightState, lightListener);
             //  bridge.updateLightState(light, lightState);   // If no bridge response is required then use this simpler form.
         }

@@ -127,7 +127,6 @@ public class LightsProblemDialogFragment extends AppCompatDialogFragment {
         // assure that at least one light is reachable/on
         final Collection<PHLight> offLights = new HashSet<>();
         final Collection<PHLight> unreachableLights = new HashSet<>();
-        // TODO more stringent light access check, make sure at least one OK light
         okLights = new HashSet<>();
 
         final StringBuilder offLightsBuilder = new StringBuilder("   ");

@@ -1,5 +1,6 @@
 package com.oakonell.huematch;
 
+import com.oakonell.huematch.utils.HueUtils;
 import com.oakonell.huematch.utils.RunningFPSAverager;
 
 import org.junit.Test;
@@ -16,6 +17,24 @@ import static org.junit.Assert.fail;
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
 public class ExampleUnitTest {
+
+    @Test
+    public void testXyToCt() {
+        float xy[] = new float[2];
+
+
+        //153->500, cold->hot
+        xy[0] = 0.675f;
+        xy[1] = 0.322f;
+        // 283
+        assertEquals(239, HueUtils.xyToTemperature(xy));
+
+        xy[0] = 0.1691f;
+        xy[1] = 0.0441f;
+        // 605
+        assertEquals(568, HueUtils.xyToTemperature(xy));
+
+    }
 
     @Test
     public void testRunningAverager() {
