@@ -93,7 +93,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private static final String TAG = "HueMatcherActivity";
 
-    private static final java.lang.String BRIGHTNESS_SCALE_SAVE_KEY = "brightnessScale";
+    private static final java.lang.String BRIGHTNESS_ADJUSTMENT_SAVE_KEY = "brightnessAdjustment";
     private static final java.lang.String IS_CONTINUOUS_SAVE_KEY = "continuous";
     private static final java.lang.String ZOOM_RECT_SAVE_KEY = "zoomRect";
 
@@ -180,7 +180,29 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private TextView brightnessView;
 
-    private int brightnessScale = HueUtils.BRIGHTNESS_MAX;
+    BrightnessAdjustmentState brightnessAdjustmentState = new BrightnessAdjustmentState();
+
+    private class BrightnessAdjustmentState {
+        //http://www.dfstudios.co.uk/articles/programming/image-programming-algorithms/image-processing-algorithms-part-4-brightness-adjustment/
+        private int brightnessAdjustment = 0;
+
+        private void fromProgress(int progress) {
+            brightnessAdjustment = progress - getResources().getInteger(R.integer.no_brightness_adj);
+        }
+
+        private int toBrightnessProgress() {
+            return brightnessAdjustment + getResources().getInteger(R.integer.no_brightness_adj);
+        }
+
+        public int getBrightnessAdjustment() {
+            return brightnessAdjustment;
+        }
+
+        public void setBrightnessAdjustment(int brightnessAdjustment) {
+            this.brightnessAdjustment = brightnessAdjustment;
+        }
+    }
+
     private CaptureState captureState = CaptureState.OFF;
 
     private PHHueSDK phHueSDK;
@@ -245,13 +267,13 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         brightnessView = (TextView) findViewById(R.id.brightness);
         SeekBar brightnessSeekbar = (SeekBar) findViewById(R.id.seekBar);
-        brightnessSeekbar.setProgress(brightnessScale);
+        brightnessSeekbar.setProgress(brightnessAdjustmentState.toBrightnessProgress());
 
 
         brightnessSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                brightnessScale = i;
+                brightnessAdjustmentState.fromProgress(i);
             }
 
             @Override
@@ -266,8 +288,8 @@ public class HueMatcherActivity extends AppCompatActivity {
         });
 
         if (savedInstanceState != null) {
-            brightnessScale = savedInstanceState.getInt(BRIGHTNESS_SCALE_SAVE_KEY, HueUtils.BRIGHTNESS_MAX);
-            brightnessSeekbar.setProgress(brightnessScale);
+            brightnessAdjustmentState.setBrightnessAdjustment(savedInstanceState.getInt(BRIGHTNESS_ADJUSTMENT_SAVE_KEY, 0));
+            brightnessSeekbar.setProgress(brightnessAdjustmentState.toBrightnessProgress());
 
             zoomRect = savedInstanceState.getParcelable(ZOOM_RECT_SAVE_KEY);
 
@@ -414,7 +436,7 @@ public class HueMatcherActivity extends AppCompatActivity {
                 }
             }
 
-            final int adjustedBrightness = Math.min(HueUtils.BRIGHTNESS_MAX, (int) (1.0 * colorAndBrightness.getBrightness() / brightnessScale * HueUtils.BRIGHTNESS_MAX));
+            final int adjustedBrightness = Math.max(0, Math.min(HueUtils.BRIGHTNESS_MAX, colorAndBrightness.getBrightness() + brightnessAdjustmentState.getBrightnessAdjustment()));
             final ImageUtils.ColorAndBrightness adjustedColorAndBrightness = new ImageUtils.ColorAndBrightness(colorAndBrightness.getColor(), adjustedBrightness);
             if (captureState != CaptureState.OFF) {
                 setLightsTo(adjustedColorAndBrightness);
@@ -1107,7 +1129,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(BRIGHTNESS_SCALE_SAVE_KEY, brightnessScale);
+        outState.putInt(BRIGHTNESS_ADJUSTMENT_SAVE_KEY, brightnessAdjustmentState.getBrightnessAdjustment());
         if (captureState == CaptureState.CONTINUOUS) {
             outState.putBoolean(IS_CONTINUOUS_SAVE_KEY, true);
         }
