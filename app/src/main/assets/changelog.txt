@@ -1,3 +1,8 @@
+v1.12
+  Improved light error handling
+  Support ColorTemperature bulbs
+  Improved brightness adjustment
+  Change launcher icon
 v1.11
  Fix sample update
  remove debug/fps- debug only
