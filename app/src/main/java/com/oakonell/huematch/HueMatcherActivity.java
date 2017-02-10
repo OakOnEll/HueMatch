@@ -24,6 +24,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.AsyncTask;
@@ -307,6 +308,23 @@ public class HueMatcherActivity extends AppCompatActivity {
             long picDuration = captureCallBackStart - captureCallBackEnd;
             if (DEEP_DEBUG) {
                 Log.i("Camera2", "capture completed -pic preview time " + TimeUnit.NANOSECONDS.toMillis(picDuration) + "ms");
+
+                StringBuilder builder = new StringBuilder("Capture Result");
+                builder.append("\n  ");
+                for (CaptureResult.Key<?> each : result.getKeys()) {
+                    Object val = result.get(each);
+                    builder.append(each.getName() + " = " + val);
+                    builder.append("\n  ");
+                }
+                Log.i(TAG, builder.toString());
+                builder = new StringBuilder("Capture Request");
+                builder.append("\n  ");
+                for (CaptureRequest.Key<?> each : request.getKeys()) {
+                    Object val = request.get(each);
+                    builder.append(each.getName() + " = " + val);
+                    builder.append("\n  ");
+                }
+                Log.i(TAG, builder.toString());
             }
 
             processCapturedImage(picDuration);
@@ -569,8 +587,6 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void createCameraPreview() {
         try {
-            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-
             SurfaceTexture texture = textureView.getSurfaceTexture();
             Surface surface = new Surface(texture);
 
@@ -768,8 +784,8 @@ public class HueMatcherActivity extends AppCompatActivity {
 
             float[] xy = HueUtils.colorToXY(colorAndBrightness.getColor(), light);
             if (lightType == PHLight.PHLightType.CT_LIGHT) {
-                int ct = HueUtils.xyToTemperature(xy);
-                lightState.setCt((int) ct, true);
+                int ct = HueUtils.xyToTemperatureMirek(xy);
+                lightState.setCt(ct, true);
             } else if (lightType == PHLight.PHLightType.CT_COLOR_LIGHT || lightType == PHLight.PHLightType.COLOR_LIGHT) {
                 lightState.setX(xy[0]);
                 lightState.setY(xy[1]);

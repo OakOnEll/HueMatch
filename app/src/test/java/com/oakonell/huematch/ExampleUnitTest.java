@@ -27,12 +27,12 @@ public class ExampleUnitTest {
         xy[0] = 0.675f;
         xy[1] = 0.322f;
         // 283
-        assertEquals(239, HueUtils.xyToTemperature(xy));
+        assertEquals(239, HueUtils.xyToTemperatureMirek(xy));
 
         xy[0] = 0.1691f;
         xy[1] = 0.0441f;
         // 605
-        assertEquals(568, HueUtils.xyToTemperature(xy));
+        assertEquals(568, HueUtils.xyToTemperatureMirek(xy));
 
     }
 

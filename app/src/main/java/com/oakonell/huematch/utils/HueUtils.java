@@ -14,7 +14,9 @@ public class HueUtils {
         return PHUtilities.calculateXY(color, light.getModelNumber());
     }
 
-    public static int xyToTemperature(float xy[]) {
+    public static int xyToTemperatureMirek(float xy[]) {
+        // watch https://developers.meethue.com/content/xy-color-temperature#comment-3046
+        //    There may be an API for this in the future
         float x = xy[0];
         float y = xy[1];
         // Method 1
