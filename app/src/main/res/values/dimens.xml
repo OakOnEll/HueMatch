@@ -26,4 +26,7 @@
     <dimen name="sample_size">32dp</dimen>
     <dimen name="min_bright_seek">150dp</dimen>
 
+    <dimen name="tick_width">3dp</dimen>
+    <dimen name="tick_height">24dp</dimen>
+
 </resources>

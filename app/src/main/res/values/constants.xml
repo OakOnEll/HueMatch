@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="max_brightness">512</integer>
+    <integer name="no_brightness_adj">256</integer>
+
+</resources>

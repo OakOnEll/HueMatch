@@ -24,11 +24,11 @@
 
         <include
             layout="@layout/fps_heads_up"
-            android:layout_margin="@dimen/text_margin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true" />
+            android:layout_alignParentTop="true"
+            android:layout_margin="@dimen/text_margin" />
 
     </RelativeLayout>
 
@@ -129,12 +129,31 @@
                     android:textColor="@android:color/secondary_text_dark"
                     tools:ignore="NestedWeights" />
 
-                <SeekBar
-                    android:id="@+id/seekBar"
+
+                <RelativeLayout
                     android:layout_width="0dp"
                     android:layout_height="@dimen/row_height"
-                    android:layout_weight="1"
-                    android:max="255" />
+                    android:layout_weight="1">
+
+                    <View
+                        android:layout_width="@dimen/tick_width"
+                        android:layout_height="@dimen/tick_height"
+                        android:layout_centerInParent="true"
+                        android:background="@color/colorPrimaryDark" />
+
+                    <SeekBar
+                        android:id="@+id/seekBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/row_height"
+                        android:max="@integer/max_brightness"
+                        android:minWidth="@dimen/min_bright_seek"
+                        android:progress="@integer/no_brightness_adj"
+                        android:progressDrawable="@drawable/progress"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentStart="true" />
+
+
+                </RelativeLayout>
 
             </LinearLayout>
         </LinearLayout>
