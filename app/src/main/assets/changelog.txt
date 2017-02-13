@@ -1,3 +1,7 @@
+v1.14
+  Throttle light commands to 10 per sec max total, not per light
+v1.13
+  Throttle light commands to 10 per sec max
 v1.12
   Improved light error handling
   Support ColorTemperature bulbs

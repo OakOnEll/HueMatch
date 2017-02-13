@@ -3,11 +3,18 @@ package com.oakonell.huematch.utils;
 import com.philips.lighting.hue.sdk.utilities.PHUtilities;
 import com.philips.lighting.model.PHLight;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Created by Rob on 1/20/2017.
  */
 
 public class HueUtils {
+    // philips says to send <10 commands/s
+    //   I am receiving 901 errors with internal code 404, which
+    //      https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwi8297LjIfSAhVB6YMKHZ3bDSsQFggaMAA&url=https%3A%2F%2Fdevelopers.meethue.com%2Fcontent%2Fapi-version-170-and-error-901&usg=AFQjCNFTDnXrnnkeU8HX2WMIvax6OoqBfg&sig2=w31bqq4ni-yTPVKe_HKQlw
+    //   says may be related to flooding the bridge.
+    public static final long LIGHT_MESSAGE_THROTTLE_NS = TimeUnit.MILLISECONDS.toNanos(100);
     public static final int BRIGHTNESS_MAX = 254;
 
     public static float[] colorToXY(int color, PHLight light) {

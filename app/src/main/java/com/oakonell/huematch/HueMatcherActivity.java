@@ -208,6 +208,8 @@ public class HueMatcherActivity extends AppCompatActivity {
     private PHHueSDK phHueSDK;
     private int transitionTimeHundredsOfMs;
 
+    private long lastLightCommand;
+
     @Override
     @DebugLog
     protected void onCreate(Bundle savedInstanceState) {
@@ -391,6 +393,14 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
 
         long start = System.nanoTime();
+        // throttle light messages to avoid overloading the bridge 10 commands / second is recommended
+        if (start - lastLightCommand < HueUtils.LIGHT_MESSAGE_THROTTLE_NS * controlledIds.size()) {
+            if (DEBUG) {
+                Log.i(TAG, "Throttle Light command: Skipping command");
+            }
+            return;
+        }
+        lastLightCommand = start;
         Bitmap bitmap = textureView.getBitmap();
         long bitmapDuration = System.nanoTime() - start;
         BitMapData data = new BitMapData();

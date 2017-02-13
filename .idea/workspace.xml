@@ -24,6 +24,8 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/build.gradle" afterPath="$PROJECT_DIR$/app/build.gradle" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/assets/changelog.txt" afterPath="$PROJECT_DIR$/app/src/main/assets/changelog.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" />
     </list>
     <ignored path="HueMatch.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -59,8 +61,8 @@
       <file leaf-file-name="HueMatcherActivity.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="293">
-              <caret line="99" column="59" selection-start-line="99" selection-start-column="59" selection-end-line="99" selection-end-column="59" />
+            <state relative-caret-position="144">
+              <caret line="388" column="0" selection-start-line="388" selection-start-column="0" selection-end-line="388" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#4338#4339#0" expanded="true" />
@@ -71,12 +73,22 @@
                 <element signature="e#6573#6627#0" expanded="true" />
                 <element signature="e#6685#6686#0" expanded="true" />
                 <element signature="e#6736#6737#0" expanded="true" />
-                <element signature="e#8984#9038#0" expanded="true" />
-                <element signature="e#25637#25660#0" expanded="true" />
-                <element signature="e#33381#33993#0" expanded="true" />
-                <element signature="e#33992#33993#0" expanded="true" />
-                <element signature="e#40528#40560#0" expanded="true" />
+                <element signature="e#9020#9074#0" expanded="true" />
+                <element signature="e#26051#26074#0" expanded="true" />
+                <element signature="e#33795#34407#0" expanded="true" />
+                <element signature="e#34406#34407#0" expanded="true" />
+                <element signature="e#40942#40974#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="HueUtils.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="221">
+              <caret line="16" column="44" selection-start-line="16" selection-start-column="44" selection-end-line="16" selection-end-column="44" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -95,7 +107,7 @@
         <entry file="file://$PROJECT_DIR$/app/src/main/assets/changelog.txt">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="4" selection-end-column="22" />
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="1" selection-end-column="64" />
               <folding />
             </state>
           </provider>
@@ -157,16 +169,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="459">
               <caret line="27" column="0" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="progress_fill.xml" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/res/drawable/progress_fill.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="34">
-              <caret line="2" column="24" selection-start-line="2" selection-start-column="24" selection-end-line="2" selection-end-column="24" />
               <folding />
             </state>
           </provider>
@@ -1901,7 +1903,7 @@
     </option>
     <option name="modificationStamps">
       <map>
-        <entry key="E:\projects\HueMatch" value="4457491056157" />
+        <entry key="E:\projects\HueMatch" value="4457509060142" />
       </map>
     </option>
     <option name="projectBuildClasspath">
@@ -2245,7 +2247,6 @@
         <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/RunningFPSAverager.java" />
         <option value="$PROJECT_DIR$/app/src/main/res/layout/fps_heads_up.xml" />
         <option value="$PROJECT_DIR$/app/src/available_result_keys.txt" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" />
         <option value="$PROJECT_DIR$/app/src/main/res/values/constants.xml" />
         <option value="$PROJECT_DIR$/app/src/main/res/drawable/progress.xml" />
         <option value="$PROJECT_DIR$/app/src/main/res/drawable/thumb.xml" />
@@ -2254,6 +2255,7 @@
         <option value="$PROJECT_DIR$/app/src/main/res/layout-port/content_hue_matcher.xml" />
         <option value="$PROJECT_DIR$/app/src/main/res/values/dimens.xml" />
         <option value="$PROJECT_DIR$/app/src/main/res/layout-land/content_hue_matcher.xml" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java" />
         <option value="$PROJECT_DIR$/app/build.gradle" />
         <option value="$PROJECT_DIR$/app/src/main/assets/changelog.txt" />
@@ -2881,7 +2883,7 @@
       <window_info id="Tool Output" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3280363" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Nl-Palette" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Build Variants" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36095345" sideWeight="0.5290635" order="14" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36095345" sideWeight="0.53552204" order="14" side_tool="true" content_ui="tabs" />
       <window_info id="Android Monitor" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2985244" sideWeight="0.48008612" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Properties" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -2903,7 +2905,7 @@
       <window_info id="Captures" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2497309" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Gradle Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.40136054" sideWeight="0.5043057" order="13" side_tool="true" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17007536" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36095345" sideWeight="0.47093648" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36095345" sideWeight="0.46447793" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Gradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
@@ -2955,7 +2957,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java</url>
-          <line>44</line>
+          <line>51</line>
           <properties />
           <option name="timeStamp" value="77" />
         </line-breakpoint>
@@ -3320,14 +3322,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="10" column="28" selection-start-line="10" selection-start-column="28" selection-end-line="10" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/content_controlled_lights.xml">
       <provider selected="true" editor-type-id="android-designer2">
         <state />
@@ -3336,7 +3330,7 @@
         <state relative-caret-position="-646">
           <caret line="11" column="0" selection-start-line="7" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
           <folding>
-            <element signature="e#597#637#0" expanded="true" />
+            <element signature="e#597#637#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -3421,8 +3415,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="293">
-          <caret line="99" column="59" selection-start-line="99" selection-start-column="59" selection-end-line="99" selection-end-column="59" />
+        <state relative-caret-position="144">
+          <caret line="388" column="0" selection-start-line="388" selection-start-column="0" selection-end-line="388" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#4338#4339#0" expanded="true" />
@@ -3433,11 +3427,11 @@
             <element signature="e#6573#6627#0" expanded="true" />
             <element signature="e#6685#6686#0" expanded="true" />
             <element signature="e#6736#6737#0" expanded="true" />
-            <element signature="e#8984#9038#0" expanded="true" />
-            <element signature="e#25637#25660#0" expanded="true" />
-            <element signature="e#33381#33993#0" expanded="true" />
-            <element signature="e#33992#33993#0" expanded="true" />
-            <element signature="e#40528#40560#0" expanded="true" />
+            <element signature="e#9020#9074#0" expanded="true" />
+            <element signature="e#26051#26074#0" expanded="true" />
+            <element signature="e#33795#34407#0" expanded="true" />
+            <element signature="e#34406#34407#0" expanded="true" />
+            <element signature="e#40942#40974#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -3450,10 +3444,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="16" column="44" selection-start-line="16" selection-start-column="44" selection-end-line="16" selection-end-column="44" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/assets/changelog.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="4" selection-end-column="22" />
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="1" selection-end-column="64" />
           <folding />
         </state>
       </provider>
