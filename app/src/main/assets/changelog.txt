@@ -1,3 +1,5 @@
+v1.15
+  Improved error reporting
 v1.14
   Throttle light commands to 10 per sec max total, not per light
 v1.13
