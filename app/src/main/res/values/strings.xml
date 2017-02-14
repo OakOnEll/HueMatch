@@ -54,6 +54,7 @@
     <string name="lights_not_available">Some lights are not available:</string>
     <string name="lights_that_are_unreachable">Lights that are unreachable</string>
     <string name="lights_that_are_off">Lights that are off</string>
+    <string name="light_error_toast_prefix">Light error: </string>
 
     <plurals name="trial_over">
         <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>

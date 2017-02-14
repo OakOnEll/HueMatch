@@ -72,4 +72,14 @@ public class ExampleUnitTest {
             fail(message + "- expected: " + expected + ", but was: " + val + " with abs diff: " + absDiff + " greater than epsilon: " + epsilon * expected);
         }
     }
+
+    @Test
+    public void testErrorCode() {
+        assertEquals("BRIDGE_NOT_RESPONDING", HueUtils.convertErrorCodeToConstantName(46));
+        assertEquals("AUTHENTICATION_FAILED", HueUtils.convertErrorCodeToConstantName(1));
+        assertEquals("PUSHLINK_BUTTON_NOT_PRESSED", HueUtils.convertErrorCodeToConstantName(101));
+        assertEquals("LIGHTS_CACHE_UPDATED", HueUtils.convertErrorCodeToConstantName(1140));
+
+    }
+
 }

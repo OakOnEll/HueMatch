@@ -1,8 +1,13 @@
 package com.oakonell.huematch.utils;
 
+import android.support.annotation.Nullable;
+
+import com.philips.lighting.hue.sdk.PHMessageType;
 import com.philips.lighting.hue.sdk.utilities.PHUtilities;
+import com.philips.lighting.model.PHHueError;
 import com.philips.lighting.model.PHLight;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,6 +55,37 @@ public class HueUtils {
         // Using this scale, the warmest color 2000K is 500 mirek ("ct":500) and the coldest color 6500K is 153 mirek ("ct":153)
         float micro2 = (float) (1 / temp2 * 1000000);
         return (int) micro2;
+    }
+
+    public static String convertErrorCodeToConstantName(int error) {
+        final Class phHueErrorClass = PHHueError.class;
+        String each = findIntegerConstantNameInClass(phHueErrorClass, error);
+        if (each != null) return each;
+        final Class phMessageTypeClass = PHMessageType.class;
+        return findIntegerConstantNameInClass(phMessageTypeClass, error);
+    }
+
+    @Nullable
+    private static String findIntegerConstantNameInClass(Class<?> phHueErrorClass, int error) {
+        for (Field each : phHueErrorClass.getFields()) {
+            if (each.getType().equals(Integer.TYPE)) {
+                try {
+                    if (error == each.getInt(null)) return each.getName();
+                } catch (IllegalAccessException e) {
+                    // skip
+                }
+            }
+            if (each.getType().equals(Integer.class)) {
+                try {
+                    final Integer integer = (Integer) each.get(null);
+                    if (integer == null) continue;
+                    if (error == integer.intValue()) return each.getName();
+                } catch (IllegalAccessException e) {
+                    // skip
+                }
+            }
+        }
+        return null;
     }
 
 }

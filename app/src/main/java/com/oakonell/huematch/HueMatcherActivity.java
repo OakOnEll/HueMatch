@@ -570,7 +570,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             }
         }
         if (!offLights.isEmpty() || !unreachableLights.isEmpty() || okLights.isEmpty()) {
-            LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(captureType, false);
+            LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(captureType, false, null);
             dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
             return true;
         }
@@ -868,21 +868,27 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onError(final int arg0, final String arg1) {
-            if (arg0 == 42) {
-                //Log.e(TAG, "Received (ignorable?) light error:" + arg0 + "-" + arg1);
+        public void onError(final int errorCode, final String arg1) {
+            if (errorCode == PHHueError.UNABLE_TO_PROCESS_REQUEST) {
+                // This comes through "frequently", just ignore for now?
+                //Log.e(TAG, "Received (ignorable?) light error:" + errorCode + "-" + arg1);
                 return;
             }
-            Log.e(TAG, "Received light error:" + arg0 + "-" + arg1);
+            String errorConstant = HueUtils.convertErrorCodeToConstantName(errorCode);
+            final String errorCodeString = errorConstant != null ? errorCode + "(" + errorConstant + ")"
+                    : errorCode + "";
+            Log.e(TAG, "Received light error:" + errorCodeString + "-" + arg1);
+            final String errorString = arg1 != null ? errorCodeString + " - " + arg1
+                    : errorCodeString;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (captureState == CaptureState.CONTINUOUS) {
                         stopContinuous();
-                        LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(CaptureState.CONTINUOUS, true);
+                        LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(CaptureState.CONTINUOUS, true, errorString);
                         dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
-                    } else {
-                        Toast.makeText(HueMatcherActivity.this, "Light error: " + arg0 + " - " + arg1, Toast.LENGTH_SHORT).show();
+                    } else if (captureState == CaptureState.STILL) {
+                        Toast.makeText(HueMatcherActivity.this, getString(R.string.light_error_toast_prefix) + errorString, Toast.LENGTH_SHORT).show();
                     }
                 }
             });

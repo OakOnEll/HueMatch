@@ -25,6 +25,7 @@ import java.util.Set;
 public class LightsProblemDialogFragment extends AppCompatDialogFragment {
     private static final String ARG_TYPE = "type";
     private static final String ARG_WAIT = "waitForUpdate";
+    private static final String ARG_ERROR = "error_text";
     private PHHueSDK phHueSDK;
     private Set<String> controlledIds;
     private View turnOnLightsButton;
@@ -37,11 +38,12 @@ public class LightsProblemDialogFragment extends AppCompatDialogFragment {
     private View wait;
     private View info_layout;
 
-    public static LightsProblemDialogFragment create(HueMatcherActivity.CaptureState state, boolean waitForUpdate) {
+    public static LightsProblemDialogFragment create(HueMatcherActivity.CaptureState state, boolean waitForUpdate, String errorString) {
         LightsProblemDialogFragment dialog = new LightsProblemDialogFragment();
         Bundle args = new Bundle();
         args.putString(ARG_TYPE, state.toString());
         args.putBoolean(ARG_WAIT, waitForUpdate);
+        args.putString(ARG_ERROR, errorString);
         dialog.setArguments(args);
 
         return dialog;
@@ -96,6 +98,11 @@ public class LightsProblemDialogFragment extends AppCompatDialogFragment {
         });
 
         boolean waitForUpdate = getArguments().getBoolean(ARG_WAIT);
+        String errorText = getArguments().getString(ARG_ERROR);
+        TextView error_text_view = (TextView) view.findViewById(R.id.error_text);
+        if (errorText != null) {
+            error_text_view.setText(getString(R.string.light_error_toast_prefix) + errorText);
+        }
 
         if (!waitForUpdate) {
             configure();
