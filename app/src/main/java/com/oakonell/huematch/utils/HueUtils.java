@@ -19,7 +19,8 @@ public class HueUtils {
     //   I am receiving 901 errors with internal code 404, which
     //      https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwi8297LjIfSAhVB6YMKHZ3bDSsQFggaMAA&url=https%3A%2F%2Fdevelopers.meethue.com%2Fcontent%2Fapi-version-170-and-error-901&usg=AFQjCNFTDnXrnnkeU8HX2WMIvax6OoqBfg&sig2=w31bqq4ni-yTPVKe_HKQlw
     //   says may be related to flooding the bridge.
-    public static final long LIGHT_MESSAGE_THROTTLE_NS = TimeUnit.MILLISECONDS.toNanos(100);
+    // a user experienced bridge communication troubles on an S7 with 100 ms throttle, trying to lower the message send rate
+    public static final long LIGHT_MESSAGE_THROTTLE_NS = TimeUnit.MILLISECONDS.toNanos(90);
     public static final int BRIGHTNESS_MAX = 254;
 
     public static float[] colorToXY(int color, PHLight light) {

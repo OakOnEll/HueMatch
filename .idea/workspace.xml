@@ -21,13 +21,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="48919080-8e0d-4c7f-9f36-01a2e6936ceb" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/app/src/main/res/drawable/thumb.xml" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/res/layout-land/content_hue_matcher.xml" afterPath="$PROJECT_DIR$/app/src/main/res/layout-land/content_hue_matcher.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/res/layout-port/content_hue_matcher.xml" afterPath="$PROJECT_DIR$/app/src/main/res/layout-port/content_hue_matcher.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/res/layout/dialog_lights_problem.xml" afterPath="$PROJECT_DIR$/app/src/main/res/layout/dialog_lights_problem.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" />
     </list>
     <ignored path="HueMatch.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -63,123 +57,25 @@
       <file leaf-file-name="HueMatcherActivity.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="291">
-              <caret line="266" column="13" selection-start-line="266" selection-start-column="13" selection-end-line="266" selection-end-column="13" />
+            <state relative-caret-position="41">
+              <caret line="834" column="17" selection-start-line="834" selection-start-column="17" selection-end-line="834" selection-end-column="17" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#9428#9576#0" expanded="true" />
                 <element signature="e#9575#9576#0" expanded="true" />
+                <element signature="e#16638#16639#0" expanded="true" />
+                <element signature="e#16694#16695#0" expanded="true" />
                 <element signature="e#36331#36375#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="strings.xml" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/res/values/strings.xml">
+      <file leaf-file-name="HueUtils.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="220">
-              <caret line="55" column="57" selection-start-line="55" selection-start-column="57" selection-end-line="55" selection-end-column="57" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="changelog.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/assets/changelog.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="1" selection-end-column="26" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="build.gradle" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/build.gradle">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="153">
-              <caret line="9" column="22" selection-start-line="9" selection-start-column="22" selection-end-line="9" selection-end-column="22" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PHMessageType.class" pinned="false" current-in-tab="false">
-        <entry file="jar://$PROJECT_DIR$/app/libs/huelocalsdk.jar!/com/philips/lighting/hue/sdk/PHMessageType.class">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
-              <caret line="11" column="52" selection-start-line="11" selection-start-column="32" selection-end-line="11" selection-end-column="52" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="activity_hue_matcher.xml" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/activity_hue_matcher.xml">
-          <provider editor-type-id="android-designer2">
-            <state />
-          </provider>
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="391">
-              <caret line="23" column="43" selection-start-line="23" selection-start-column="43" selection-end-line="23" selection-end-column="43" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="content_hue_matcher.xml" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/src/main/res/layout-land/content_hue_matcher.xml">
-          <provider selected="true" editor-type-id="android-designer2">
-            <state />
-          </provider>
-          <provider editor-type-id="text-editor">
-            <state relative-caret-position="124">
-              <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
-              <folding>
-                <element signature="e#1767#1784#0" expanded="true" />
-                <element signature="e#1819#1836#0" expanded="true" />
-                <element signature="e#1877#1897#0" expanded="true" />
-                <element signature="e#2002#2025#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="content_hue_matcher.xml" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/res/layout-port/content_hue_matcher.xml">
-          <provider selected="true" editor-type-id="android-designer2">
-            <state />
-          </provider>
-          <provider editor-type-id="text-editor">
-            <state relative-caret-position="359">
-              <caret line="99" column="68" selection-start-line="99" selection-start-column="68" selection-end-line="99" selection-end-column="68" />
-              <folding>
-                <element signature="e#2031#2048#0" expanded="true" />
-                <element signature="e#2087#2104#0" expanded="true" />
-                <element signature="e#2148#2173#0" expanded="true" />
-                <element signature="e#2477#2494#0" expanded="true" />
-                <element signature="e#2582#2607#0" expanded="true" />
-                <element signature="e#2814#2831#0" expanded="true" />
-                <element signature="e#2870#2887#0" expanded="true" />
-                <element signature="e#2931#2956#0" expanded="true" />
-                <element signature="e#3111#3146#0" expanded="true" />
-                <element signature="e#3799#3816#0" expanded="true" />
-                <element signature="e#3904#3929#0" expanded="true" />
-                <element signature="e#4078#4095#0" expanded="true" />
-                <element signature="e#4181#4206#0" expanded="true" />
-                <element signature="e#4250#4275#0" expanded="true" />
-                <element signature="e#7311#7331#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PHHueError.class" pinned="false" current-in-tab="false">
-        <entry file="jar://$PROJECT_DIR$/app/libs/huesdkresources.jar!/com/philips/lighting/model/PHHueError.class">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="22" column="60" selection-start-line="22" selection-start-column="60" selection-end-line="22" selection-end-column="60" />
+            <state relative-caret-position="204">
+              <caret line="21" column="124" selection-start-line="21" selection-start-column="124" selection-end-line="21" selection-end-column="124" />
               <folding />
             </state>
           </provider>
@@ -2240,7 +2136,6 @@
         <option value="$PROJECT_DIR$/app/src/main/res/drawable/background_fill.xml" />
         <option value="$PROJECT_DIR$/app/src/main/res/values/dimens.xml" />
         <option value="$PROJECT_DIR$/app/src/test/java/com/oakonell/huematch/ExampleUnitTest.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" />
         <option value="$PROJECT_DIR$/app/src/main/res/layout/dialog_lights_problem.xml" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/LightsProblemDialogFragment.java" />
         <option value="$PROJECT_DIR$/app/src/main/res/values/strings.xml" />
@@ -2249,6 +2144,7 @@
         <option value="$PROJECT_DIR$/app/src/main/res/layout-port/content_hue_matcher.xml" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java" />
         <option value="$PROJECT_DIR$/app/src/main/res/layout-land/content_hue_matcher.xml" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java" />
       </list>
     </option>
   </component>
@@ -2985,7 +2881,7 @@
       <window_info id="Captures" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2497309" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Gradle Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.40136054" sideWeight="0.5043057" order="13" side_tool="true" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17590618" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.33741647" sideWeight="0.434338" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.26280624" sideWeight="0.434338" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Gradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
@@ -3037,7 +2933,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java</url>
-          <line>56</line>
+          <line>57</line>
           <properties />
           <option name="timeStamp" value="77" />
         </line-breakpoint>
@@ -3368,14 +3264,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="343">
-          <caret line="86" column="9" selection-start-line="86" selection-start-column="9" selection-end-line="86" selection-end-column="9" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="jar://$PROJECT_DIR$/app/libs/huesdkresources.jar!/com/philips/lighting/hue/listener/PHBridgeAPIListener.class">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
@@ -3475,19 +3363,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="291">
-          <caret line="266" column="13" selection-start-line="266" selection-start-column="13" selection-end-line="266" selection-end-column="13" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#9428#9576#0" expanded="true" />
-            <element signature="e#9575#9576#0" expanded="true" />
-            <element signature="e#36331#36375#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/res/layout-port/content_hue_matcher.xml">
       <provider selected="true" editor-type-id="android-designer2">
         <state />
@@ -3528,6 +3403,29 @@
             <element signature="e#1877#1897#0" expanded="true" />
             <element signature="e#2002#2025#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/HueMatcherActivity.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="41">
+          <caret line="834" column="17" selection-start-line="834" selection-start-column="17" selection-end-line="834" selection-end-column="17" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#9428#9576#0" expanded="true" />
+            <element signature="e#9575#9576#0" expanded="true" />
+            <element signature="e#16638#16639#0" expanded="true" />
+            <element signature="e#16694#16695#0" expanded="true" />
+            <element signature="e#36331#36375#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/oakonell/huematch/utils/HueUtils.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="21" column="124" selection-start-line="21" selection-start-column="124" selection-end-line="21" selection-end-column="124" />
+          <folding />
         </state>
       </provider>
     </entry>
