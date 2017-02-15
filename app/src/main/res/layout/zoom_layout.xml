@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/zoom_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/background_light"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:visibility="gone">
+
+    <ImageView
+
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_zoom_in_black_24dp" />
+
+    <SeekBar
+        android:id="@+id/zoom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/half_text_margin"
+        android:layout_marginStart="@dimen/half_text_margin"
+        android:max="@integer/zoom_levels" />
+</LinearLayout>

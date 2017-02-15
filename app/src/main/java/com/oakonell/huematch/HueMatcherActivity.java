@@ -48,6 +48,10 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -105,20 +109,492 @@ public class HueMatcherActivity extends AppCompatActivity {
     private static final boolean DEEP_DEBUG = false;
     private static final int REQUEST_CODE_CONFIG = 101;
 
-    private Size mPreviewSize;
+    private static final long ZOOM_INPUT_DELAY_NS = TimeUnit.MILLISECONDS.toNanos(100);
+    private static final long HIDE_ZOOM_AFTER_MS = TimeUnit.SECONDS.toMillis(2);
+
     private HueSharedPreferences prefs;
+
     private Set<String> controlledIds;
     private Set<String> currentSessionLightIds;
+
     private boolean autostartContinuous;
-    private float finger_spacing;
-    private int zoom_level;
-    private Rect zoomRect;
 
     private final LicenseUtils licenseUtils = new LicenseUtils();
-    private View fps_heads_up;
-    private View lights_fps_heads_up;
-    private TextView cam_fps;
-    private TextView light_fps;
+
+    static class ViewHolder {
+        private View fps_heads_up;
+        private View lights_fps_heads_up;
+        private TextView cam_fps;
+        private TextView light_fps;
+
+        private AutoFitTextureView textureView;
+
+        private ImageButton takeStillButton;
+        private ImageButton takeContinuousButton;
+        private ImageButton cameraSwitchButton;
+
+        private View sampleView;
+
+        private TextView brightnessView;
+        private SeekBar brightnessSeekbar;
+        private SeekBar zoomSeekBar;
+        public View zoom_layout;
+    }
+
+    private ViewHolder viewHolder = new ViewHolder();
+
+    /**
+     * A {@link Semaphore} to prevent the app from exiting before closing the camera.
+     */
+    private final Semaphore mCameraOpenCloseLock = new Semaphore(1);
+    private CameraDevice cameraDevice;
+    private CameraCaptureSession cameraCaptureSessions;
+    private CaptureRequest.Builder captureRequestBuilder;
+    private int cameraIndex = 0;
+
+    // Zoom
+    private Handler uiHandler = new Handler();
+    private Animation zoomFadeOut = null;
+    private long lastZoomUpdateTimeNs = 0;
+    private int zoom_level;
+    private Rect zoomRect;
+    private float maxZoom;
+
+    private Size mPreviewSize;
+    private Size imageDimension;
+
+    private Handler mBackgroundHandler;
+    private HandlerThread mBackgroundThread;
+
+    private BrightnessAdjustmentState brightnessAdjustmentState = new BrightnessAdjustmentState();
+
+    private CaptureState captureState = CaptureState.OFF;
+
+    private PHHueSDK phHueSDK;
+    private int transitionTimeHundredsOfMs;
+    private long lastLightCommandTimeNs;
+
+
+    private final RunningFPSAverager camFpsAverager = new RunningFPSAverager();
+    private final RunningFPSAverager lightFpsAverager = new RunningFPSAverager();
+
+    private long captureCallBackEndTimeNs = System.nanoTime();
+    private long processImageCallBackEndTimeNs = System.nanoTime();
+
+    private ProcessImageTask processImageTask;
+
+    private final CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
+        @Override
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+            super.onCaptureCompleted(session, request, result);
+            long captureCallBackStart = System.nanoTime();
+            long picDuration = captureCallBackStart - captureCallBackEndTimeNs;
+            if (DEEP_DEBUG) {
+                Log.i("Camera2", "capture completed -pic preview time " + TimeUnit.NANOSECONDS.toMillis(picDuration) + "ms");
+
+                StringBuilder builder = new StringBuilder("Capture Result");
+                builder.append("\n  ");
+                for (CaptureResult.Key<?> each : result.getKeys()) {
+                    Object val = result.get(each);
+                    builder.append(each.getName() + " = " + val);
+                    builder.append("\n  ");
+                }
+                Log.i(TAG, builder.toString());
+                builder = new StringBuilder("Capture Request");
+                builder.append("\n  ");
+                for (CaptureRequest.Key<?> each : request.getKeys()) {
+                    Object val = request.get(each);
+                    builder.append(each.getName() + " = " + val);
+                    builder.append("\n  ");
+                }
+                Log.i(TAG, builder.toString());
+            }
+
+            processCapturedImage(picDuration);
+            if (prefs.getViewFPS()) {
+                final double fps = camFpsAverager.addSample(System.nanoTime() - captureCallBackEndTimeNs);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        viewHolder.cam_fps.setText(NumberFormat.getNumberInstance().format(fps));
+                    }
+                });
+            }
+            captureCallBackEndTimeNs = System.nanoTime();
+        }
+
+        @Override
+        public void onCaptureFailed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureFailure failure) {
+            super.onCaptureFailed(session, request, failure);
+            Log.i("Camera2", "capture failed");
+        }
+
+        @Override
+        public void onCaptureBufferLost(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull Surface target, long frameNumber) {
+            super.onCaptureBufferLost(session, request, target, frameNumber);
+            Log.i("Camera2", "onCaptureBufferLost");
+        }
+    };
+
+    private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+            openCamera(width, height);
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            // Transform the image captured size according to the surface width and height
+            configureTransform(width, height);
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+            return true;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        }
+    };
+
+
+    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
+        @Override
+        public void onOpened(@NonNull CameraDevice camera) {
+            //This is called when the camera is open
+            mCameraOpenCloseLock.release();
+            Log.i(TAG, "onOpened");
+            cameraDevice = camera;
+
+            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = null;
+            try {
+                characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
+            } catch (CameraAccessException e) {
+                Log.e(TAG, "Error getting camera characteristics!", e);
+            }
+            maxZoom = (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)) * getResources().getInteger(R.integer.zoom_levels);
+            viewHolder.zoomSeekBar.setMax((int) maxZoom);
+            createCameraPreview();
+        }
+
+        @Override
+        public void onDisconnected(@NonNull CameraDevice camera) {
+            mCameraOpenCloseLock.release();
+            if (cameraDevice != null) {
+                cameraDevice.close();
+            }
+            cameraDevice = null;
+        }
+
+        @Override
+        public void onError(@NonNull CameraDevice camera, int error) {
+            mCameraOpenCloseLock.release();
+            if (cameraDevice != null) {
+                cameraDevice.close();
+            }
+            cameraDevice = null;
+        }
+    };
+
+    private final View.OnTouchListener surfaceTouchListener = new View.OnTouchListener() {
+        /**
+         * Determine the space between the first two fingers
+         */
+        @SuppressWarnings("deprecation")
+        private float getFingerSpacing(MotionEvent event) {
+
+            float x = event.getX(0) - event.getX(1);
+            float y = event.getY(0) - event.getY(1);
+            return (float) Math.sqrt(x * x + y * y);
+        }
+
+        private float finger_spacing;
+        long lastTouchZoomTime = 0;
+
+        public boolean onTouch(View view, MotionEvent event) {
+            // http://stackoverflow.com/questions/35968315/android-camera2-handle-zoom
+            int action = event.getAction();
+            float current_finger_spacing;
+
+            if (event.getPointerCount() > 1) {
+                viewHolder.zoomSeekBar.setProgress(zoom_level);
+
+                if (System.nanoTime() - lastTouchZoomTime < ZOOM_INPUT_DELAY_NS) return true;
+                lastTouchZoomTime = System.nanoTime();
+
+                // Multi touch logic
+                current_finger_spacing = getFingerSpacing(event);
+
+                if (finger_spacing != 0) {
+                    if (current_finger_spacing > finger_spacing && maxZoom > zoom_level) {
+                        zoom_level++;
+
+                    } else if (current_finger_spacing < finger_spacing && zoom_level >= 1) {
+                        zoom_level--;
+
+                    }
+                    viewHolder.zoomSeekBar.setProgress(zoom_level);
+                    updateZoom();
+
+                }
+                finger_spacing = current_finger_spacing;
+            } else {
+                if (action == MotionEvent.ACTION_UP) {
+                    //single touch logic
+                }
+            }
+
+
+            return true;
+        }
+    };
+
+
+    private void hideZoomLayout(final long myUpdateTimeNs) {
+        if (myUpdateTimeNs != lastZoomUpdateTimeNs) {
+            // there was a subsequent zoom operation, leave the view up longer
+            if (zoomFadeOut != null) {
+                zoomFadeOut.cancel();
+            }
+            return;
+        }
+
+        zoomFadeOut = new AlphaAnimation(1, 0);
+        zoomFadeOut.setInterpolator(new AccelerateInterpolator());
+        zoomFadeOut.setDuration(500);
+        zoomFadeOut.cancel();
+
+        zoomFadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if (myUpdateTimeNs != lastZoomUpdateTimeNs) {
+                    viewHolder.zoom_layout.setVisibility(View.VISIBLE);
+                    return;
+                }
+                viewHolder.zoom_layout.setVisibility(View.GONE);
+                zoomFadeOut = null;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        viewHolder.zoom_layout.startAnimation(zoomFadeOut);
+
+
+    }
+
+    private void updateZoom() {
+        viewHolder.zoom_layout.setVisibility(View.VISIBLE);
+
+        lastZoomUpdateTimeNs = System.nanoTime();
+        final long myUpdateTimeNs = lastZoomUpdateTimeNs;
+
+        uiHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                hideZoomLayout(myUpdateTimeNs);
+            }
+        }, HIDE_ZOOM_AFTER_MS);
+
+        try {
+            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            if (cameraDevice == null) return;
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
+
+            setCameraRequestBuilderZoom(characteristics);
+        } catch (CameraAccessException e) {
+            Log.e(TAG, "Camera error while zooming", e);
+        }
+        try {
+            cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), captureCallback, mBackgroundHandler);
+        } catch (CameraAccessException e) {
+            Log.e(TAG, "Camera error while zooming", e);
+        } catch (NullPointerException ex) {
+            Log.e(TAG, "Camera error while zooming", ex);
+            ex.printStackTrace();
+        }
+    }
+
+    private void setCameraRequestBuilderZoom(CameraCharacteristics characteristics) {
+        Rect m = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+
+        int minW = (int) (m.width() / maxZoom);
+        int minH = (int) (m.height() / maxZoom);
+        int difW = m.width() - minW;
+        int difH = m.height() - minH;
+        int cropW = (int) (difW / 100.0 * zoom_level);
+        int cropH = (int) (difH / 100.0 * zoom_level);
+        cropW -= cropW & 3;
+        cropH -= cropH & 3;
+        zoomRect = new Rect(cropW, cropH, m.width() - cropW, m.height() - cropH);
+        captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+    }
+
+
+    // If you want to handle the response from the bridge, create a PHLightListener object.
+    private final PHLightListener lightListener = new PHLightListener() {
+
+        @Override
+        public void onSuccess() {
+            if (!DEBUG) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(HueMatcherActivity.this, "Light success", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @Override
+        public void onStateUpdate(Map<String, String> arg0, List<PHHueError> arg1) {
+            StringBuilder builder = new StringBuilder("Updated lights:");
+            for (Map.Entry<String, String> entry : arg0.entrySet()) {
+                builder.append("\n");
+                builder.append(entry.getKey()).append(",").append(entry.getValue());
+            }
+            for (PHHueError each : arg1) {
+                builder.append("\n\t");
+                builder.append(each.getAddress()).append(":").append(each.getCode()).append("-").append(each.getMessage());
+            }
+            Log.w(TAG, "Light has updated: " + builder.toString());
+            if (!DEBUG) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(HueMatcherActivity.this, "Lights updated", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @Override
+        public void onError(final int errorCode, final String arg1) {
+            if (errorCode == PHHueError.UNABLE_TO_PROCESS_REQUEST) {
+                // This comes through "frequently", just ignore for now?
+                //Log.e(TAG, "Received (ignorable?) light error:" + errorCode + "-" + arg1);
+                return;
+            }
+            String errorConstant = HueUtils.convertErrorCodeToConstantName(errorCode);
+            final String errorCodeString = errorConstant != null ? errorCode + "(" + errorConstant + ")"
+                    : errorCode + "";
+            Log.e(TAG, "Received light error:" + errorCodeString + "-" + arg1);
+            final String errorString = arg1 != null ? errorCodeString + " - " + arg1
+                    : errorCodeString;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (captureState == CaptureState.CONTINUOUS) {
+                        stopContinuous();
+                        LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(CaptureState.CONTINUOUS, true, errorString);
+                        dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
+                    } else if (captureState == CaptureState.STILL) {
+                        Toast.makeText(HueMatcherActivity.this, getString(R.string.light_error_toast_prefix) + errorString, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onReceivingLightDetails(PHLight arg0) {
+            if (!DEBUG) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(HueMatcherActivity.this, "Light details", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @Override
+        public void onReceivingLights(List<PHBridgeResource> arg0) {
+            if (!DEBUG) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(HueMatcherActivity.this, "Lights received", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @Override
+        public void onSearchComplete() {
+            if (!DEBUG) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(HueMatcherActivity.this, "Light search", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    };
+
+
+    private BridgeUpdateListener bridgeUpdateListener;
+
+    private final PHSDKListener phsdkListener = new PHSDKListener() {
+        long lastUpdate = System.currentTimeMillis();
+
+        @Override
+        public void onCacheUpdated(List<Integer> list, PHBridge phBridge) {
+            Log.i(TAG, "cache update");
+            if (!phBridge.getResourceCache().getBridgeConfiguration().getBridgeID().equals(phHueSDK.getSelectedBridge().getResourceCache().getBridgeConfiguration().getBridgeID())) {
+                return;
+            }
+
+            long start = lastUpdate;
+            lastUpdate = System.currentTimeMillis();
+
+            Log.i(TAG, "Cache updated in " + (lastUpdate - start) + " ms: list=" + list.toString());
+            final Map<String, Long> lastHeartbeat = phHueSDK.getLastHeartbeat();
+            if (bridgeUpdateListener != null) {
+                bridgeUpdateListener.onCacheUpdated();
+            }
+        }
+
+        @Override
+        public void onBridgeConnected(PHBridge phBridge, String s) {
+
+        }
+
+        @Override
+        public void onAuthenticationRequired(PHAccessPoint phAccessPoint) {
+
+        }
+
+        @Override
+        public void onAccessPointsFound(List<PHAccessPoint> list) {
+
+        }
+
+        @Override
+        public void onError(int i, String s) {
+
+        }
+
+        @Override
+        public void onConnectionResumed(PHBridge phBridge) {
+
+        }
+
+        @Override
+        public void onConnectionLost(PHAccessPoint phAccessPoint) {
+
+        }
+
+        @Override
+        public void onParsingErrors(List<PHHueParsingError> list) {
+
+        }
+    };
+
 
     public PHHueSDK getPhHueSDK() {
         return phHueSDK;
@@ -157,33 +633,15 @@ public class HueMatcherActivity extends AppCompatActivity {
         OFF, STILL, CONTINUOUS
     }
 
-    private AutoFitTextureView textureView;
+    interface BridgeUpdateListener {
+        void onCacheUpdated();
+    }
 
-    private CameraDevice cameraDevice;
-    private CameraCaptureSession cameraCaptureSessions;
-    private CaptureRequest.Builder captureRequestBuilder;
-    /**
-     * A {@link Semaphore} to prevent the app from exiting before closing the camera.
-     */
-    private final Semaphore mCameraOpenCloseLock = new Semaphore(1);
-
-
-    private Size imageDimension;
-
-    private ImageButton takeStillButton;
-    private ImageButton takeContinuousButton;
-    private ImageButton cameraSwitchButton;
-
-    private Handler mBackgroundHandler;
-    private HandlerThread mBackgroundThread;
-
-    int cameraIndex = 0;
-
-    private View sampleView;
-
-    private TextView brightnessView;
-
-    BrightnessAdjustmentState brightnessAdjustmentState = new BrightnessAdjustmentState();
+    static class BitMapData {
+        Bitmap bitmap;
+        long bitmapDurationNs;
+        long picDurationNs;
+    }
 
     private class BrightnessAdjustmentState {
         //http://www.dfstudios.co.uk/articles/programming/image-programming-algorithms/image-processing-algorithms-part-4-brightness-adjustment/
@@ -206,12 +664,6 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
     }
 
-    private CaptureState captureState = CaptureState.OFF;
-
-    private PHHueSDK phHueSDK;
-    private int transitionTimeHundredsOfMs;
-
-    private long lastLightCommand;
 
     @Override
     @DebugLog
@@ -244,32 +696,41 @@ public class HueMatcherActivity extends AppCompatActivity {
         phHueSDK.getNotificationManager().registerSDKListener(phsdkListener);
 
 
-        fps_heads_up = findViewById(R.id.fps_heads_up);
-        cam_fps = (TextView) findViewById(R.id.cam_fps);
-        lights_fps_heads_up = findViewById(R.id.lights_fps_heads_up);
-        light_fps = (TextView) findViewById(R.id.light_fps);
+        viewHolder.fps_heads_up = findViewById(R.id.fps_heads_up);
+        viewHolder.cam_fps = (TextView) findViewById(R.id.cam_fps);
+        viewHolder.lights_fps_heads_up = findViewById(R.id.lights_fps_heads_up);
+        viewHolder.light_fps = (TextView) findViewById(R.id.light_fps);
 
 
-        textureView = (AutoFitTextureView) findViewById(R.id.texture);
-        textureView.setSurfaceTextureListener(textureListener);
-        textureView.setOnTouchListener(surfaceTouchListener);
+        viewHolder.textureView = (AutoFitTextureView) findViewById(R.id.texture);
 
-        takeStillButton = (ImageButton) findViewById(R.id.btn_sample_still);
-        takeContinuousButton = (ImageButton) findViewById(R.id.btn_sample_continuously);
-        cameraSwitchButton = (ImageButton) findViewById(R.id.camera_switch);
+        viewHolder.takeStillButton = (ImageButton) findViewById(R.id.btn_sample_still);
+        viewHolder.takeContinuousButton = (ImageButton) findViewById(R.id.btn_sample_continuously);
+        viewHolder.cameraSwitchButton = (ImageButton) findViewById(R.id.camera_switch);
+
+        viewHolder.sampleView = findViewById(R.id.sample);
+
+        viewHolder.brightnessView = (TextView) findViewById(R.id.brightness);
+        viewHolder.brightnessSeekbar = (SeekBar) findViewById(R.id.seekBar);
+        viewHolder.zoomSeekBar = (SeekBar) findViewById(R.id.zoom);
+        viewHolder.zoom_layout = findViewById(R.id.zoom_layout);
+
+        viewHolder.textureView.setSurfaceTextureListener(textureListener);
+        viewHolder.textureView.setOnTouchListener(surfaceTouchListener);
 
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+
         try {
             if (manager.getCameraIdList().length > 1) {
-                cameraSwitchButton.setVisibility(View.VISIBLE);
+                viewHolder.cameraSwitchButton.setVisibility(View.VISIBLE);
             } else {
-                cameraSwitchButton.setVisibility(View.GONE);
+                viewHolder.cameraSwitchButton.setVisibility(View.GONE);
             }
         } catch (CameraAccessException e) {
             // ignore
         }
 
-        cameraSwitchButton.setOnClickListener(new View.OnClickListener() {
+        viewHolder.cameraSwitchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 switchCamera();
@@ -285,17 +746,13 @@ public class HueMatcherActivity extends AppCompatActivity {
                 outline.setOval(0, 0, size, size);
             }
         };
-        takeContinuousButton.setOutlineProvider(viewOutlineProvider);
-        takeStillButton.setOutlineProvider(viewOutlineProvider);
+        viewHolder.takeContinuousButton.setOutlineProvider(viewOutlineProvider);
+        viewHolder.takeStillButton.setOutlineProvider(viewOutlineProvider);
 
-        sampleView = findViewById(R.id.sample);
-
-        brightnessView = (TextView) findViewById(R.id.brightness);
-        SeekBar brightnessSeekbar = (SeekBar) findViewById(R.id.seekBar);
-        brightnessSeekbar.setProgress(brightnessAdjustmentState.toBrightnessProgress());
+        viewHolder.brightnessSeekbar.setProgress(brightnessAdjustmentState.toBrightnessProgress());
 
 
-        brightnessSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        viewHolder.brightnessSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 brightnessAdjustmentState.fromProgress(i);
@@ -312,9 +769,29 @@ public class HueMatcherActivity extends AppCompatActivity {
             }
         });
 
+        viewHolder.zoomSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                zoom_level = progress;
+                if (fromUser) {
+                    HueMatcherActivity.this.updateZoom();
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
         if (savedInstanceState != null) {
             brightnessAdjustmentState.setBrightnessAdjustment(savedInstanceState.getInt(BRIGHTNESS_ADJUSTMENT_SAVE_KEY, 0));
-            brightnessSeekbar.setProgress(brightnessAdjustmentState.toBrightnessProgress());
+            viewHolder.brightnessSeekbar.setProgress(brightnessAdjustmentState.toBrightnessProgress());
 
             zoomRect = savedInstanceState.getParcelable(ZOOM_RECT_SAVE_KEY);
             cameraIndex = savedInstanceState.getInt(CAMERA_INDEX_SAVE_KEY, 0);
@@ -326,14 +803,14 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
 
 
-        takeStillButton.setOnClickListener(new View.OnClickListener() {
+        viewHolder.takeStillButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 takeStill(false);
             }
         });
 
-        takeContinuousButton.setOnClickListener(new View.OnClickListener() {
+        viewHolder.takeContinuousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 takeContinuous(false);
@@ -345,75 +822,14 @@ public class HueMatcherActivity extends AppCompatActivity {
     }
 
     private void switchCamera() {
-        cameraSwitchButton.setEnabled(false);
+        viewHolder.cameraSwitchButton.setEnabled(false);
         closeCamera();
         cameraIndex++;
         if (cameraIndex > 1) cameraIndex = 0;
-        openCamera(textureView.getWidth(), textureView.getHeight());
+        zoom_level = 0;
+        openCamera(viewHolder.textureView.getWidth(), viewHolder.textureView.getHeight());
     }
 
-    private final RunningFPSAverager camFpsAverager = new RunningFPSAverager();
-    private final RunningFPSAverager lightFpsAverager = new RunningFPSAverager();
-
-    private long captureCallBackEnd = System.nanoTime();
-    private final CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
-        @Override
-        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-            super.onCaptureCompleted(session, request, result);
-            long captureCallBackStart = System.nanoTime();
-            long picDuration = captureCallBackStart - captureCallBackEnd;
-            if (DEEP_DEBUG) {
-                Log.i("Camera2", "capture completed -pic preview time " + TimeUnit.NANOSECONDS.toMillis(picDuration) + "ms");
-
-                StringBuilder builder = new StringBuilder("Capture Result");
-                builder.append("\n  ");
-                for (CaptureResult.Key<?> each : result.getKeys()) {
-                    Object val = result.get(each);
-                    builder.append(each.getName() + " = " + val);
-                    builder.append("\n  ");
-                }
-                Log.i(TAG, builder.toString());
-                builder = new StringBuilder("Capture Request");
-                builder.append("\n  ");
-                for (CaptureRequest.Key<?> each : request.getKeys()) {
-                    Object val = request.get(each);
-                    builder.append(each.getName() + " = " + val);
-                    builder.append("\n  ");
-                }
-                Log.i(TAG, builder.toString());
-            }
-
-            processCapturedImage(picDuration);
-            if (prefs.getViewFPS()) {
-                final double fps = camFpsAverager.addSample(System.nanoTime() - captureCallBackEnd);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        cam_fps.setText(NumberFormat.getNumberInstance().format(fps));
-                    }
-                });
-            }
-            captureCallBackEnd = System.nanoTime();
-        }
-
-        @Override
-        public void onCaptureFailed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureFailure failure) {
-            super.onCaptureFailed(session, request, failure);
-            Log.i("Camera2", "capture failed");
-        }
-
-        @Override
-        public void onCaptureBufferLost(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull Surface target, long frameNumber) {
-            super.onCaptureBufferLost(session, request, target, frameNumber);
-            Log.i("Camera2", "onCaptureBufferLost");
-        }
-    };
-
-    static class BitMapData {
-        Bitmap bitmap;
-        long bitmapDurationNs;
-        long picDurationNs;
-    }
 
     private void processCapturedImage(final long picDurationNs) {
         if (processImageTask != null && processImageTask.getStatus() != AsyncTask.Status.FINISHED)
@@ -426,14 +842,14 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         long start = System.nanoTime();
         // throttle light messages to avoid overloading the bridge 10 commands / second is recommended
-        if (start - lastLightCommand < HueUtils.LIGHT_MESSAGE_THROTTLE_NS * controlledIds.size()) {
+        if (start - lastLightCommandTimeNs < HueUtils.LIGHT_MESSAGE_THROTTLE_NS * controlledIds.size()) {
             if (DEBUG) {
                 Log.i(TAG, "Throttle Light command: Skipping command");
             }
             return;
         }
-        lastLightCommand = start;
-        Bitmap bitmap = textureView.getBitmap();
+        lastLightCommandTimeNs = start;
+        Bitmap bitmap = viewHolder.textureView.getBitmap();
         long bitmapDuration = System.nanoTime() - start;
         BitMapData data = new BitMapData();
         data.bitmap = bitmap;
@@ -444,7 +860,6 @@ public class HueMatcherActivity extends AppCompatActivity {
         processImageTask.execute(data);
     }
 
-    private long processImageCallBackEnd = System.nanoTime();
 
     class ProcessImageTask extends AsyncTask<BitMapData, Object, ImageUtils.ColorAndBrightness> {
         private final CaptureState captureState;
@@ -488,70 +903,17 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ImageUtils.ColorAndBrightness adjustedColorAndBrightness) {
-            sampleView.setBackgroundColor(adjustedColorAndBrightness.getColor());
-            brightnessView.setText(NumberFormat.getIntegerInstance().format(adjustedColorAndBrightness.getBrightness()));
+            viewHolder.sampleView.setBackgroundColor(adjustedColorAndBrightness.getColor());
+            viewHolder.brightnessView.setText(NumberFormat.getIntegerInstance().format(adjustedColorAndBrightness.getBrightness()));
 
             if (captureState == CaptureState.CONTINUOUS && prefs.getViewFPS()) {
-                double fps = lightFpsAverager.addSample(System.nanoTime() - processImageCallBackEnd);
-                light_fps.setText(NumberFormat.getNumberInstance().format(fps));
+                double fps = lightFpsAverager.addSample(System.nanoTime() - processImageCallBackEndTimeNs);
+                viewHolder.light_fps.setText(NumberFormat.getNumberInstance().format(fps));
             }
-            processImageCallBackEnd = System.nanoTime();
+            processImageCallBackEndTimeNs = System.nanoTime();
         }
     }
 
-    private ProcessImageTask processImageTask;
-
-    private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            openCamera(width, height);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-            // Transform the image captured size according to the surface width and height
-            configureTransform(width, height);
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-        }
-    };
-
-
-    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
-        @Override
-        public void onOpened(@NonNull CameraDevice camera) {
-            //This is called when the camera is open
-            mCameraOpenCloseLock.release();
-            Log.i(TAG, "onOpened");
-            cameraDevice = camera;
-            createCameraPreview();
-        }
-
-        @Override
-        public void onDisconnected(@NonNull CameraDevice camera) {
-            mCameraOpenCloseLock.release();
-            if (cameraDevice != null) {
-                cameraDevice.close();
-            }
-            cameraDevice = null;
-        }
-
-        @Override
-        public void onError(@NonNull CameraDevice camera, int error) {
-            mCameraOpenCloseLock.release();
-            if (cameraDevice != null) {
-                cameraDevice.close();
-            }
-            cameraDevice = null;
-        }
-    };
 
     @DebugLog
     private void startBackgroundThread() {
@@ -621,11 +983,11 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private void stopContinuous() {
         captureState = CaptureState.OFF;
-        takeStillButton.setEnabled(true);
-        takeContinuousButton.setImageResource(R.drawable.ic_videocam_black_24dp);
+        viewHolder.takeStillButton.setEnabled(true);
+        viewHolder.takeContinuousButton.setImageResource(R.drawable.ic_videocam_black_24dp);
 
         if (prefs.getViewFPS()) {
-            lights_fps_heads_up.setVisibility(View.GONE);
+            viewHolder.lights_fps_heads_up.setVisibility(View.GONE);
         }
 
 
@@ -637,11 +999,11 @@ public class HueMatcherActivity extends AppCompatActivity {
     private void startContinuous(boolean skipLightValidation) {
         if (!skipLightValidation && lightsHaveProblems(CaptureState.CONTINUOUS)) return;
         if (prefs.getViewFPS()) {
-            lights_fps_heads_up.setVisibility(View.VISIBLE);
+            viewHolder.lights_fps_heads_up.setVisibility(View.VISIBLE);
         }
 
-        takeStillButton.setEnabled(false);
-        takeContinuousButton.setImageResource(R.drawable.ic_stop_black_24dp);
+        viewHolder.takeStillButton.setEnabled(false);
+        viewHolder.takeContinuousButton.setImageResource(R.drawable.ic_stop_black_24dp);
         captureState = CaptureState.CONTINUOUS;
         // keep screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -651,19 +1013,23 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void createCameraPreview() {
         try {
-            cameraSwitchButton.setEnabled(true);
+            viewHolder.cameraSwitchButton.setEnabled(true);
             if (cameraIndex == 0) {
-                cameraSwitchButton.setImageResource(R.drawable.ic_camera_rear_variant_black_24dp);
+                viewHolder.cameraSwitchButton.setImageResource(R.drawable.ic_camera_rear_variant_black_24dp);
             } else {
-                cameraSwitchButton.setImageResource(R.drawable.ic_camera_front_variant_black_24dp);
+                viewHolder.cameraSwitchButton.setImageResource(R.drawable.ic_camera_front_variant_black_24dp);
             }
 
-            SurfaceTexture texture = textureView.getSurfaceTexture();
+            SurfaceTexture texture = viewHolder.textureView.getSurfaceTexture();
             Surface surface = new Surface(texture);
 
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequestBuilder.addTarget(surface);
+
+            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
+            setCameraRequestBuilderZoom(characteristics);
 
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
@@ -785,16 +1151,16 @@ public class HueMatcherActivity extends AppCompatActivity {
         transitionTimeHundredsOfMs = prefs.getTransitionTime();
 
         if (!prefs.getViewFPS()) {
-            fps_heads_up.setVisibility(View.GONE);
+            viewHolder.fps_heads_up.setVisibility(View.GONE);
         } else {
-            fps_heads_up.setVisibility(View.VISIBLE);
+            viewHolder.fps_heads_up.setVisibility(View.VISIBLE);
         }
 
         startBackgroundThread();
-        if (textureView.isAvailable()) {
-            openCamera(textureView.getWidth(), textureView.getHeight());
+        if (viewHolder.textureView.isAvailable()) {
+            openCamera(viewHolder.textureView.getWidth(), viewHolder.textureView.getHeight());
         } else {
-            textureView.setSurfaceTextureListener(textureListener);
+            viewHolder.textureView.setSurfaceTextureListener(textureListener);
         }
         Log.i(TAG, "Starting heartbeat to update cache");
         phHueSDK.enableHeartbeat(phHueSDK.getSelectedBridge(), 2000);
@@ -871,102 +1237,6 @@ public class HueMatcherActivity extends AppCompatActivity {
         }
 
     }
-
-    // If you want to handle the response from the bridge, create a PHLightListener object.
-    private final PHLightListener lightListener = new PHLightListener() {
-
-        @Override
-        public void onSuccess() {
-            if (!DEBUG) return;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(HueMatcherActivity.this, "Light success", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        @Override
-        public void onStateUpdate(Map<String, String> arg0, List<PHHueError> arg1) {
-            StringBuilder builder = new StringBuilder("Updated lights:");
-            for (Map.Entry<String, String> entry : arg0.entrySet()) {
-                builder.append("\n");
-                builder.append(entry.getKey()).append(",").append(entry.getValue());
-            }
-            for (PHHueError each : arg1) {
-                builder.append("\n\t");
-                builder.append(each.getAddress()).append(":").append(each.getCode()).append("-").append(each.getMessage());
-            }
-            Log.w(TAG, "Light has updated: " + builder.toString());
-            if (!DEBUG) return;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(HueMatcherActivity.this, "Lights updated", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        @Override
-        public void onError(final int errorCode, final String arg1) {
-            if (errorCode == PHHueError.UNABLE_TO_PROCESS_REQUEST) {
-                // This comes through "frequently", just ignore for now?
-                //Log.e(TAG, "Received (ignorable?) light error:" + errorCode + "-" + arg1);
-                return;
-            }
-            String errorConstant = HueUtils.convertErrorCodeToConstantName(errorCode);
-            final String errorCodeString = errorConstant != null ? errorCode + "(" + errorConstant + ")"
-                    : errorCode + "";
-            Log.e(TAG, "Received light error:" + errorCodeString + "-" + arg1);
-            final String errorString = arg1 != null ? errorCodeString + " - " + arg1
-                    : errorCodeString;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (captureState == CaptureState.CONTINUOUS) {
-                        stopContinuous();
-                        LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(CaptureState.CONTINUOUS, true, errorString);
-                        dialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
-                    } else if (captureState == CaptureState.STILL) {
-                        Toast.makeText(HueMatcherActivity.this, getString(R.string.light_error_toast_prefix) + errorString, Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void onReceivingLightDetails(PHLight arg0) {
-            if (!DEBUG) return;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(HueMatcherActivity.this, "Light details", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        @Override
-        public void onReceivingLights(List<PHBridgeResource> arg0) {
-            if (!DEBUG) return;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(HueMatcherActivity.this, "Lights received", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        @Override
-        public void onSearchComplete() {
-            if (!DEBUG) return;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(HueMatcherActivity.this, "Light search", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-    };
 
 
     /**
@@ -1049,10 +1319,10 @@ public class HueMatcherActivity extends AppCompatActivity {
         // We fit the aspect ratio of TextureView to the size of preview we picked.
         int orientation = getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            textureView.setAspectRatio(
+            viewHolder.textureView.setAspectRatio(
                     mPreviewSize.getWidth(), mPreviewSize.getHeight());
         } else {
-            textureView.setAspectRatio(
+            viewHolder.textureView.setAspectRatio(
                     mPreviewSize.getHeight(), mPreviewSize.getWidth());
         }
 
@@ -1065,7 +1335,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     @DebugLog
     private void configureTransform(int viewWidth, int viewHeight) {
-        if (null == textureView || null == mPreviewSize) {
+        if (null == viewHolder.textureView || null == mPreviewSize) {
             return;
         }
         int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
@@ -1085,7 +1355,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         } else if (Surface.ROTATION_180 == rotation) {
             matrix.postRotate(180, centerX, centerY);
         }
-        textureView.setTransform(matrix);
+        viewHolder.textureView.setTransform(matrix);
     }
 
     /**
@@ -1173,75 +1443,6 @@ public class HueMatcherActivity extends AppCompatActivity {
         outState.putInt(CAMERA_INDEX_SAVE_KEY, cameraIndex);
     }
 
-    /**
-     * Determine the space between the first two fingers
-     */
-    @SuppressWarnings("deprecation")
-    private float getFingerSpacing(MotionEvent event) {
-
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
-    }
-
-
-    private final View.OnTouchListener surfaceTouchListener = new View.OnTouchListener() {
-        public boolean onTouch(View view, MotionEvent event) {
-            // http://stackoverflow.com/questions/35968315/android-camera2-handle-zoom
-            try {
-                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-                float maxZoom = (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)) * 10;
-
-                Rect m = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-                int action = event.getAction();
-                float current_finger_spacing;
-
-                if (event.getPointerCount() > 1) {
-                    // Multi touch logic
-                    current_finger_spacing = getFingerSpacing(event);
-
-                    if (finger_spacing != 0) {
-                        if (current_finger_spacing > finger_spacing && maxZoom > zoom_level) {
-                            zoom_level++;
-
-                        } else if (current_finger_spacing < finger_spacing && zoom_level > 1) {
-                            zoom_level--;
-
-                        }
-                        int minW = (int) (m.width() / maxZoom);
-                        int minH = (int) (m.height() / maxZoom);
-                        int difW = m.width() - minW;
-                        int difH = m.height() - minH;
-                        int cropW = (int) (difW / 100.0 * zoom_level);
-                        int cropH = (int) (difH / 100.0 * zoom_level);
-                        cropW -= cropW & 3;
-                        cropH -= cropH & 3;
-                        zoomRect = new Rect(cropW, cropH, m.width() - cropW, m.height() - cropH);
-                        captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
-                    }
-                    finger_spacing = current_finger_spacing;
-                } else {
-                    if (action == MotionEvent.ACTION_UP) {
-                        //single touch logic
-                    }
-                }
-
-                try {
-                    cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), captureCallback, mBackgroundHandler);
-                } catch (CameraAccessException e) {
-                    Log.e(TAG, "Camera error while zooming", e);
-                } catch (NullPointerException ex) {
-                    Log.e(TAG, "Camera error while zooming", ex);
-                    ex.printStackTrace();
-                }
-            } catch (CameraAccessException e) {
-                throw new RuntimeException("can not access camera.", e);
-            }
-
-            return true;
-        }
-    };
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -1265,67 +1466,5 @@ public class HueMatcherActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-
-    interface BridgeUpdateListener {
-        void onCacheUpdated();
-    }
-
-    private BridgeUpdateListener bridgeUpdateListener;
-
-    private final PHSDKListener phsdkListener = new PHSDKListener() {
-        long lastUpdate = System.currentTimeMillis();
-
-        @Override
-        public void onCacheUpdated(List<Integer> list, PHBridge phBridge) {
-            Log.i(TAG, "cache update");
-            if (!phBridge.getResourceCache().getBridgeConfiguration().getBridgeID().equals(phHueSDK.getSelectedBridge().getResourceCache().getBridgeConfiguration().getBridgeID())) {
-                return;
-            }
-
-            long start = lastUpdate;
-            lastUpdate = System.currentTimeMillis();
-
-            Log.i(TAG, "Cache updated in " + (lastUpdate - start) + " ms: list=" + list.toString());
-            final Map<String, Long> lastHeartbeat = phHueSDK.getLastHeartbeat();
-            if (bridgeUpdateListener != null) {
-                bridgeUpdateListener.onCacheUpdated();
-            }
-        }
-
-        @Override
-        public void onBridgeConnected(PHBridge phBridge, String s) {
-
-        }
-
-        @Override
-        public void onAuthenticationRequired(PHAccessPoint phAccessPoint) {
-
-        }
-
-        @Override
-        public void onAccessPointsFound(List<PHAccessPoint> list) {
-
-        }
-
-        @Override
-        public void onError(int i, String s) {
-
-        }
-
-        @Override
-        public void onConnectionResumed(PHBridge phBridge) {
-
-        }
-
-        @Override
-        public void onConnectionLost(PHAccessPoint phAccessPoint) {
-
-        }
-
-        @Override
-        public void onParsingErrors(List<PHHueParsingError> list) {
-
-        }
-    };
 
 }
