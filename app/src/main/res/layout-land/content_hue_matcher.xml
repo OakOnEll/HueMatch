@@ -43,6 +43,15 @@
         android:orientation="vertical">
 
         <ImageButton
+            android:id="@+id/camera_switch"
+            android:layout_width="@dimen/fab_size"
+            android:layout_height="@dimen/fab_size"
+            android:layout_marginBottom="@dimen/text_margin"
+            android:background="@drawable/ripple_rounded_button"
+            android:contentDescription="@string/switch_camera"
+            android:src="@drawable/ic_camera_rear_variant_black_24dp" />
+
+        <ImageButton
             android:id="@+id/btn_sample_still"
             android:layout_width="@dimen/fab_size"
             android:layout_height="@dimen/fab_size"

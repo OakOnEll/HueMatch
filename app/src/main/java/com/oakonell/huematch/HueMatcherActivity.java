@@ -96,6 +96,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     private static final java.lang.String BRIGHTNESS_ADJUSTMENT_SAVE_KEY = "brightnessAdjustment";
     private static final java.lang.String IS_CONTINUOUS_SAVE_KEY = "continuous";
     private static final java.lang.String ZOOM_RECT_SAVE_KEY = "zoomRect";
+    private static final java.lang.String CAMERA_INDEX_SAVE_KEY = "cameraIndex";
 
     private static final String FRAGMENT_DIALOG = "dialog";
 
@@ -171,10 +172,12 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private ImageButton takeStillButton;
     private ImageButton takeContinuousButton;
+    private ImageButton cameraSwitchButton;
 
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
 
+    int cameraIndex = 0;
 
     private View sampleView;
 
@@ -253,6 +256,26 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         takeStillButton = (ImageButton) findViewById(R.id.btn_sample_still);
         takeContinuousButton = (ImageButton) findViewById(R.id.btn_sample_continuously);
+        cameraSwitchButton = (ImageButton) findViewById(R.id.camera_switch);
+
+        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        try {
+            if (manager.getCameraIdList().length > 1) {
+                cameraSwitchButton.setVisibility(View.VISIBLE);
+            } else {
+                cameraSwitchButton.setVisibility(View.GONE);
+            }
+        } catch (CameraAccessException e) {
+            // ignore
+        }
+
+        cameraSwitchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switchCamera();
+            }
+        });
+
 
         ViewOutlineProvider viewOutlineProvider = new ViewOutlineProvider() {
             @Override
@@ -294,6 +317,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             brightnessSeekbar.setProgress(brightnessAdjustmentState.toBrightnessProgress());
 
             zoomRect = savedInstanceState.getParcelable(ZOOM_RECT_SAVE_KEY);
+            cameraIndex = savedInstanceState.getInt(CAMERA_INDEX_SAVE_KEY, 0);
 
             // startContinuous on init after camera is running, and after prefs is assigned to get controlledIds
             if (savedInstanceState.getBoolean(IS_CONTINUOUS_SAVE_KEY, false)) {
@@ -318,6 +342,14 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         prefs = HueSharedPreferences.getInstance(getApplicationContext());
 
+    }
+
+    private void switchCamera() {
+        cameraSwitchButton.setEnabled(false);
+        closeCamera();
+        cameraIndex++;
+        if (cameraIndex > 1) cameraIndex = 0;
+        openCamera(textureView.getWidth(), textureView.getHeight());
     }
 
     private final RunningFPSAverager camFpsAverager = new RunningFPSAverager();
@@ -619,6 +651,13 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void createCameraPreview() {
         try {
+            cameraSwitchButton.setEnabled(true);
+            if (cameraIndex == 0) {
+                cameraSwitchButton.setImageResource(R.drawable.ic_camera_rear_variant_black_24dp);
+            } else {
+                cameraSwitchButton.setImageResource(R.drawable.ic_camera_front_variant_black_24dp);
+            }
+
             SurfaceTexture texture = textureView.getSurfaceTexture();
             Surface surface = new Surface(texture);
 
@@ -656,11 +695,12 @@ public class HueMatcherActivity extends AppCompatActivity {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         Log.e(TAG, "is camera open");
         try {
-            setUpCameraOutputs(width, height);
+            String cameraId = manager.getCameraIdList()[cameraIndex];
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+
+            setUpCameraOutputs(width, height, characteristics);
             configureTransform(width, height);
 
-            String cameraId = manager.getCameraIdList()[0];
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
             // Add permission for camera and let user grant the permission
@@ -936,113 +976,91 @@ public class HueMatcherActivity extends AppCompatActivity {
      * @param height The height of available size for camera preview
      */
     @DebugLog
-    private void setUpCameraOutputs(int width, int height) {
+    private void setUpCameraOutputs(int width, int height, CameraCharacteristics characteristics) throws CameraAccessException {
         Activity activity = this;
-        CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
-        try {
-            for (String cameraId : manager.getCameraIdList()) {
-                CameraCharacteristics characteristics
-                        = manager.getCameraCharacteristics(cameraId);
 
-                // We don't use a front facing camera in this sample.
-                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
-                }
-
-                StreamConfigurationMap map = characteristics.get(
-                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                if (map == null) {
-                    continue;
-                }
-
-                // For still image captures, we use the largest available size.
-                Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-                        new ImageUtils.CompareSizesByArea());
-
-                // Find out if we need to swap dimension to get the preview size relative to sensor
-                // coordinate.
-                int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-                //noinspection ConstantConditions
-                int mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
-                boolean swappedDimensions = false;
-                switch (displayRotation) {
-                    case Surface.ROTATION_0:
-                    case Surface.ROTATION_180:
-                        if (mSensorOrientation == 90 || mSensorOrientation == 270) {
-                            swappedDimensions = true;
-                        }
-                        break;
-                    case Surface.ROTATION_90:
-                    case Surface.ROTATION_270:
-                        if (mSensorOrientation == 0 || mSensorOrientation == 180) {
-                            swappedDimensions = true;
-                        }
-                        break;
-                    default:
-                        Log.e(TAG, "Display rotation is invalid: " + displayRotation);
-                }
-
-                Point displaySize = new Point();
-                activity.getWindowManager().getDefaultDisplay().getSize(displaySize);
-                int rotatedPreviewWidth = width;
-                int rotatedPreviewHeight = height;
-                int maxPreviewWidth = displaySize.x;
-                int maxPreviewHeight = displaySize.y;
-
-                if (swappedDimensions) {
-                    //noinspection SuspiciousNameCombination
-                    rotatedPreviewWidth = height;
-                    //noinspection SuspiciousNameCombination
-                    rotatedPreviewHeight = width;
-                    //noinspection SuspiciousNameCombination
-                    maxPreviewWidth = displaySize.y;
-                    //noinspection SuspiciousNameCombination
-                    maxPreviewHeight = displaySize.x;
-                }
-
-                if (maxPreviewWidth > ImageUtils.MAX_PREVIEW_WIDTH) {
-                    maxPreviewWidth = ImageUtils.MAX_PREVIEW_WIDTH;
-                }
-
-                if (maxPreviewHeight > ImageUtils.MAX_PREVIEW_HEIGHT) {
-                    maxPreviewHeight = ImageUtils.MAX_PREVIEW_HEIGHT;
-                }
-
-                // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
-                // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
-                // garbage capture data.
-                mPreviewSize = ImageUtils.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
-                        rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
-                        maxPreviewHeight, largest);
-
-                // We fit the aspect ratio of TextureView to the size of preview we picked.
-                int orientation = getResources().getConfiguration().orientation;
-                if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    textureView.setAspectRatio(
-                            mPreviewSize.getWidth(), mPreviewSize.getHeight());
-                } else {
-                    textureView.setAspectRatio(
-                            mPreviewSize.getHeight(), mPreviewSize.getWidth());
-                }
-
-                // Check if the flash is supported.
-                //Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
-                //mFlashSupported = available == null ? false : available;
-
-                //mCameraId = cameraId;
-                return;
-            }
-        } catch (CameraAccessException e) {
-            Log.e(TAG, "Can't set camera outputs", e);
-        } catch (NullPointerException e) {
-            // Currently an NPE is thrown when the Camera2API is used but not supported on the
-            // device this code runs.
-
-            ErrorDialog.newInstance(getString(R.string.camera_error))
-                    .show(getSupportFragmentManager(), FRAGMENT_DIALOG);
+        StreamConfigurationMap map = characteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        if (map == null) {
+            return;
         }
+
+        // For still image captures, we use the largest available size.
+        Size largest = Collections.max(
+                Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
+                new ImageUtils.CompareSizesByArea());
+
+        // Find out if we need to swap dimension to get the preview size relative to sensor
+        // coordinate.
+        int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        //noinspection ConstantConditions
+        int mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+        boolean swappedDimensions = false;
+        switch (displayRotation) {
+            case Surface.ROTATION_0:
+            case Surface.ROTATION_180:
+                if (mSensorOrientation == 90 || mSensorOrientation == 270) {
+                    swappedDimensions = true;
+                }
+                break;
+            case Surface.ROTATION_90:
+            case Surface.ROTATION_270:
+                if (mSensorOrientation == 0 || mSensorOrientation == 180) {
+                    swappedDimensions = true;
+                }
+                break;
+            default:
+                Log.e(TAG, "Display rotation is invalid: " + displayRotation);
+        }
+
+        Point displaySize = new Point();
+        activity.getWindowManager().getDefaultDisplay().getSize(displaySize);
+        int rotatedPreviewWidth = width;
+        int rotatedPreviewHeight = height;
+        int maxPreviewWidth = displaySize.x;
+        int maxPreviewHeight = displaySize.y;
+
+        if (swappedDimensions) {
+            //noinspection SuspiciousNameCombination
+            rotatedPreviewWidth = height;
+            //noinspection SuspiciousNameCombination
+            rotatedPreviewHeight = width;
+            //noinspection SuspiciousNameCombination
+            maxPreviewWidth = displaySize.y;
+            //noinspection SuspiciousNameCombination
+            maxPreviewHeight = displaySize.x;
+        }
+
+        if (maxPreviewWidth > ImageUtils.MAX_PREVIEW_WIDTH) {
+            maxPreviewWidth = ImageUtils.MAX_PREVIEW_WIDTH;
+        }
+
+        if (maxPreviewHeight > ImageUtils.MAX_PREVIEW_HEIGHT) {
+            maxPreviewHeight = ImageUtils.MAX_PREVIEW_HEIGHT;
+        }
+
+        // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
+        // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
+        // garbage capture data.
+        mPreviewSize = ImageUtils.chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
+                rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
+                maxPreviewHeight, largest);
+
+        // We fit the aspect ratio of TextureView to the size of preview we picked.
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            textureView.setAspectRatio(
+                    mPreviewSize.getWidth(), mPreviewSize.getHeight());
+        } else {
+            textureView.setAspectRatio(
+                    mPreviewSize.getHeight(), mPreviewSize.getWidth());
+        }
+
+        // Check if the flash is supported.
+        //Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+        //mFlashSupported = available == null ? false : available;
+
+        //mCameraId = cameraId;
     }
 
     @DebugLog
@@ -1152,6 +1170,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         if (zoomRect != null) {
             outState.putParcelable(ZOOM_RECT_SAVE_KEY, zoomRect);
         }
+        outState.putInt(CAMERA_INDEX_SAVE_KEY, cameraIndex);
     }
 
     /**

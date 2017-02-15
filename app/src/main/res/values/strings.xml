@@ -11,7 +11,6 @@
     <string name="txt_pushlink">Pushlink</string>
     <string name="press_pushlink_button">Press the link button on the bridge.</string>
     <string name="txt_select_smartbridge">Please select a Hue bridge to use for this app.</string>
-    <string name="camera_error">Camera API version Error</string>
     <string name="title_activity_controlled_lights">Controlled Lights</string>
     <string name="light_issues_dialog">Light Issues</string>
     <string name="camera_timeout">HueMatcher: Timeout while acquiring the camera.</string>
@@ -55,6 +54,7 @@
     <string name="lights_that_are_unreachable">Lights that are unreachable</string>
     <string name="lights_that_are_off">Lights that are off</string>
     <string name="light_error_toast_prefix">Light error: </string>
+    <string name="switch_camera">Switch camera</string>
 
     <plurals name="trial_over">
         <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>

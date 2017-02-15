@@ -49,23 +49,57 @@
             android:orientation="horizontal">
 
             <ImageButton
+                android:id="@+id/camera_switch"
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="@dimen/fab_size"
+                android:layout_marginStart="@dimen/half_text_margin"
+                android:layout_weight="1"
+                android:background="@drawable/ripple_rounded_button"
+                android:contentDescription="Switch camera"
+                android:src="@drawable/ic_camera_rear_variant_black_24dp" />
+
+            <View
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="1dp"
+                android:layout_marginStart="@dimen/half_text_margin"
+                android:layout_weight="1"
+                android:visibility="invisible" />
+
+            <ImageButton
                 android:id="@+id/btn_sample_still"
                 android:layout_width="@dimen/fab_size"
                 android:layout_height="@dimen/fab_size"
-                android:layout_marginEnd="@dimen/half_text_margin"
+                android:layout_marginStart="@dimen/half_text_margin"
+                android:layout_weight="1"
                 android:background="@drawable/ripple_rounded_button"
                 android:contentDescription="@string/image_access_sample_still"
                 android:src="@drawable/ic_photo_camera_black_24dp" />
+
 
             <ImageButton
                 android:id="@+id/btn_sample_continuously"
                 android:layout_width="@dimen/fab_size"
                 android:layout_height="@dimen/fab_size"
                 android:layout_marginStart="@dimen/half_text_margin"
+                android:layout_weight="1"
                 android:background="@drawable/ripple_rounded_button"
                 android:contentDescription="@string/image_access_sample_continuous"
                 android:src="@drawable/ic_videocam_black_24dp" />
 
+            <View
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="1dp"
+                android:layout_marginStart="@dimen/half_text_margin"
+                android:layout_weight="1"
+                android:visibility="invisible" />
+
+            <View
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="1dp"
+                android:layout_marginEnd="@dimen/half_text_margin"
+                android:layout_marginStart="@dimen/half_text_margin"
+                android:layout_weight="1"
+                android:visibility="invisible" />
 
         </LinearLayout>
 
@@ -145,12 +179,12 @@
                         android:id="@+id/seekBar"
                         android:layout_width="match_parent"
                         android:layout_height="@dimen/row_height"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"
                         android:max="@integer/max_brightness"
                         android:minWidth="@dimen/min_bright_seek"
                         android:progress="@integer/no_brightness_adj"
-                        android:progressDrawable="@drawable/progress"
-                        android:layout_alignParentTop="true"
-                        android:layout_alignParentStart="true" />
+                        android:progressDrawable="@drawable/progress" />
 
 
                 </RelativeLayout>
