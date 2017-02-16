@@ -1,3 +1,7 @@
+v1.16
+  Support front camera
+  lower light send rate slightly
+  Improve zoom handling
 v1.15
   Improved error reporting
 v1.14
