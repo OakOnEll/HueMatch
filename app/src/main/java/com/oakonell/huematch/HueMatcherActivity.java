@@ -33,6 +33,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
@@ -51,7 +52,6 @@ import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -109,8 +109,8 @@ public class HueMatcherActivity extends AppCompatActivity {
     private static final boolean DEEP_DEBUG = false;
     private static final int REQUEST_CODE_CONFIG = 101;
 
-    private static final long ZOOM_INPUT_DELAY_NS = TimeUnit.MILLISECONDS.toNanos(100);
-    private static final long HIDE_ZOOM_AFTER_MS = TimeUnit.SECONDS.toMillis(2);
+    private static final long ZOOM_INPUT_DELAY_NS = TimeUnit.MILLISECONDS.toNanos(80);
+    private static final long HIDE_OVERLAY_VIEW_AFTER_MS = TimeUnit.SECONDS.toMillis(2);
 
     private HueSharedPreferences prefs;
 
@@ -120,6 +120,8 @@ public class HueMatcherActivity extends AppCompatActivity {
     private boolean autostartContinuous;
 
     private final LicenseUtils licenseUtils = new LicenseUtils();
+    private boolean supportsMultipleCameras;
+
 
     static class ViewHolder {
         private View fps_heads_up;
@@ -131,7 +133,6 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         private ImageButton takeStillButton;
         private ImageButton takeContinuousButton;
-        private ImageButton cameraSwitchButton;
 
         private View sampleView;
 
@@ -139,6 +140,11 @@ public class HueMatcherActivity extends AppCompatActivity {
         private SeekBar brightnessSeekbar;
         private SeekBar zoomSeekBar;
         public View zoom_layout;
+
+        @Nullable
+        public View brightness_adjust_lbl;
+        public View floating_brightness_layout;
+        private SeekBar floatingBrightnessSeekBar;
     }
 
     private ViewHolder viewHolder = new ViewHolder();
@@ -166,6 +172,9 @@ public class HueMatcherActivity extends AppCompatActivity {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
 
+    // brightness
+    private long lastBrightnessUpdateTimeNs;
+    private Animation floatingBrightnessFadeOut = null;
     private BrightnessAdjustmentState brightnessAdjustmentState = new BrightnessAdjustmentState();
 
     private CaptureState captureState = CaptureState.OFF;
@@ -388,8 +397,6 @@ public class HueMatcherActivity extends AppCompatActivity {
             }
         });
         viewHolder.zoom_layout.startAnimation(zoomFadeOut);
-
-
     }
 
     private void updateZoom() {
@@ -403,7 +410,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             public void run() {
                 hideZoomLayout(myUpdateTimeNs);
             }
-        }, HIDE_ZOOM_AFTER_MS);
+        }, HIDE_OVERLAY_VIEW_AFTER_MS);
 
         try {
             CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -706,36 +713,29 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         viewHolder.takeStillButton = (ImageButton) findViewById(R.id.btn_sample_still);
         viewHolder.takeContinuousButton = (ImageButton) findViewById(R.id.btn_sample_continuously);
-        viewHolder.cameraSwitchButton = (ImageButton) findViewById(R.id.camera_switch);
 
         viewHolder.sampleView = findViewById(R.id.sample);
 
         viewHolder.brightnessView = (TextView) findViewById(R.id.brightness);
         viewHolder.brightnessSeekbar = (SeekBar) findViewById(R.id.seekBar);
+        viewHolder.floatingBrightnessSeekBar = (SeekBar) findViewById(R.id.seekBar_2);
         viewHolder.zoomSeekBar = (SeekBar) findViewById(R.id.zoom);
         viewHolder.zoom_layout = findViewById(R.id.zoom_layout);
+
+        viewHolder.brightness_adjust_lbl = findViewById(R.id.brightness_adjust_lbl);
+        viewHolder.floating_brightness_layout = findViewById(R.id.floating_brightness_layout);
 
         viewHolder.textureView.setSurfaceTextureListener(textureListener);
         viewHolder.textureView.setOnTouchListener(surfaceTouchListener);
 
+
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
         try {
-            if (manager.getCameraIdList().length > 1) {
-                viewHolder.cameraSwitchButton.setVisibility(View.VISIBLE);
-            } else {
-                viewHolder.cameraSwitchButton.setVisibility(View.GONE);
-            }
+            supportsMultipleCameras = manager.getCameraIdList().length > 1;
         } catch (CameraAccessException e) {
             // ignore
         }
-
-        viewHolder.cameraSwitchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switchCamera();
-            }
-        });
 
 
         ViewOutlineProvider viewOutlineProvider = new ViewOutlineProvider() {
@@ -819,10 +819,89 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         prefs = HueSharedPreferences.getInstance(getApplicationContext());
 
+        viewHolder.floatingBrightnessSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
+                if (fromUser) {
+                    lastBrightnessUpdateTimeNs = System.nanoTime();
+                    final long myUpdateNs = lastBrightnessUpdateTimeNs;
+                    uiHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            hideFloatingBrightnessLayout(myUpdateNs);
+                        }
+                    }, HIDE_OVERLAY_VIEW_AFTER_MS);
+                }
+
+                brightnessAdjustmentState.fromProgress(i);
+                viewHolder.brightnessSeekbar.setProgress(i);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        viewHolder.brightness_adjust_lbl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewHolder.floating_brightness_layout.setVisibility(View.VISIBLE);
+                final long myUpdateTimeNs = System.nanoTime();
+                lastBrightnessUpdateTimeNs = myUpdateTimeNs;
+                uiHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        hideFloatingBrightnessLayout(myUpdateTimeNs);
+                    }
+                }, HIDE_OVERLAY_VIEW_AFTER_MS);
+            }
+        });
+    }
+
+    private void hideFloatingBrightnessLayout(final long myUpdateTimeNs) {
+        if (myUpdateTimeNs != lastBrightnessUpdateTimeNs) {
+            // there was a subsequent brightness adjustment operation, leave the view up longer
+            if (floatingBrightnessFadeOut != null) {
+                floatingBrightnessFadeOut.cancel();
+            }
+            return;
+        }
+
+        floatingBrightnessFadeOut = new AlphaAnimation(1, 0);
+        floatingBrightnessFadeOut.setInterpolator(new AccelerateInterpolator());
+        floatingBrightnessFadeOut.setDuration(500);
+        floatingBrightnessFadeOut.cancel();
+
+        floatingBrightnessFadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if (myUpdateTimeNs != lastBrightnessUpdateTimeNs) {
+                    viewHolder.floating_brightness_layout.setVisibility(View.VISIBLE);
+                    return;
+                }
+                viewHolder.floating_brightness_layout.setVisibility(View.GONE);
+                floatingBrightnessFadeOut = null;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        viewHolder.floating_brightness_layout.startAnimation(floatingBrightnessFadeOut);
     }
 
     private void switchCamera() {
-        viewHolder.cameraSwitchButton.setEnabled(false);
         closeCamera();
         cameraIndex++;
         if (cameraIndex > 1) cameraIndex = 0;
@@ -1013,12 +1092,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void createCameraPreview() {
         try {
-            viewHolder.cameraSwitchButton.setEnabled(true);
-            if (cameraIndex == 0) {
-                viewHolder.cameraSwitchButton.setImageResource(R.drawable.ic_camera_rear_variant_black_24dp);
-            } else {
-                viewHolder.cameraSwitchButton.setImageResource(R.drawable.ic_camera_front_variant_black_24dp);
-            }
+            invalidateOptionsMenu();
 
             SurfaceTexture texture = viewHolder.textureView.getSurfaceTexture();
             Surface surface = new Surface(texture);
@@ -1397,6 +1471,17 @@ public class HueMatcherActivity extends AppCompatActivity {
         Log.w(TAG, "Inflating home menu");
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_hue_matcher, menu);
+
+        MenuItem item = menu.findItem(R.id.switch_camera);
+        if (!supportsMultipleCameras) {
+            item.setVisible(false);
+        } else {
+            if (cameraIndex == 0) {
+                item.setIcon(R.drawable.ic_camera_rear_variant_white_24dp);
+            } else {
+                item.setIcon(R.drawable.ic_camera_front_variant_white_24dp);
+            }
+        }
         return true;
     }
 
@@ -1410,6 +1495,9 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.switch_camera:
+                switchCamera();
+                break;
             case R.id.action_settings:
                 launchLightChooser();
                 break;

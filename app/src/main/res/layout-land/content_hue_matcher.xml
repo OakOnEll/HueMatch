@@ -1,153 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
-    android:baselineAligned="false"
-    android:orientation="horizontal"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    android:background="@android:color/black">
 
-    <RelativeLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_weight="4">
-
-        <com.oakonell.huematch.utils.AutoFitTextureView
-            android:id="@+id/texture"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerInParent="true"
-            android:layout_gravity="center" />
-
-        <include
-            layout="@layout/fps_heads_up"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:layout_margin="@dimen/text_margin" />
-
-        <include
-            layout="@layout/zoom_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentStart="true" />
-    </RelativeLayout>
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|center_vertical"
-        android:layout_marginBottom="@dimen/text_margin"
-        android:layout_marginTop="@dimen/text_margin"
-        android:layout_weight="1"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <ImageButton
-            android:id="@+id/camera_switch"
-            android:layout_width="@dimen/fab_size"
-            android:layout_height="@dimen/fab_size"
-            android:layout_marginBottom="@dimen/text_margin"
-            android:background="@drawable/ripple_rounded_button"
-            android:contentDescription="@string/switch_camera"
-            android:src="@drawable/ic_camera_rear_variant_black_24dp" />
 
-        <ImageButton
-            android:id="@+id/btn_sample_still"
-            android:layout_width="@dimen/fab_size"
-            android:layout_height="@dimen/fab_size"
-            android:layout_marginBottom="@dimen/text_margin"
-            android:background="@drawable/ripple_rounded_button"
-            android:contentDescription="@string/image_access_sample_still"
-            android:src="@drawable/ic_photo_camera_black_24dp" />
-
-        <ImageButton
-            android:id="@+id/btn_sample_continuously"
-            android:layout_width="@dimen/fab_size"
-            android:layout_height="@dimen/fab_size"
-            android:layout_marginBottom="@dimen/text_margin"
-            android:background="@drawable/ripple_rounded_button"
-            android:contentDescription="@string/image_access_sample_continuous"
-            android:src="@drawable/ic_videocam_black_24dp" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/view_group"
-            android:orientation="vertical"
-            android:paddingEnd="@dimen/group_padding"
-            android:paddingStart="@dimen/group_padding">
+            android:layout_gravity="center"
+            android:layout_weight="4">
 
-            <TextView
+            <com.oakonell.huematch.utils.AutoFitTextureView
+                android:id="@+id/texture"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:text="@string/sample"
-                android:textColor="@android:color/secondary_text_dark" />
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center" />
 
-            <View
-                android:id="@+id/sample"
-                android:layout_width="@dimen/sample_size"
-                android:layout_height="@dimen/sample_size"
-                android:layout_gravity="center"
-                android:background="@color/colorPrimary" />
-
-            <TextView
-                android:id="@+id/brightness"
+            <include
+                layout="@layout/fps_heads_up"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:minEms="3"
-                android:textColor="@android:color/secondary_text_dark"
-                tools:text="255" />
-        </LinearLayout>
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="@dimen/text_margin" />
 
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal|center_vertical"
-            android:background="@drawable/view_group"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
+            <include
+                layout="@layout/zoom_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:text="@string/brightness_adjustment"
-                android:textColor="@android:color/secondary_text_dark" />
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentStart="true" />
+        </RelativeLayout>
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginBottom="@dimen/text_margin"
+            android:layout_marginTop="@dimen/text_margin"
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/btn_sample_still"
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="@dimen/fab_size"
+                android:layout_marginBottom="@dimen/text_margin"
+                android:background="@drawable/ripple_rounded_button"
+                android:contentDescription="@string/image_access_sample_still"
+                android:src="@drawable/ic_photo_camera_black_24dp" />
+
+            <ImageButton
+                android:id="@+id/btn_sample_continuously"
+                android:layout_width="@dimen/fab_size"
+                android:layout_height="@dimen/fab_size"
+                android:layout_marginBottom="@dimen/text_margin"
+                android:background="@drawable/ripple_rounded_button"
+                android:contentDescription="@string/image_access_sample_continuous"
+                android:src="@drawable/ic_videocam_black_24dp" />
+
+            <LinearLayout
+                android:id="@+id/sample_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/view_group"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="vertical"
+                android:paddingEnd="@dimen/group_padding"
+                android:paddingStart="@dimen/group_padding"
+                android:visibility="@integer/show_sample">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/group_box_text_title_margin"
+                    android:layout_marginStart="@dimen/group_box_text_title_margin"
+                    android:layout_marginTop="@dimen/group_box_title_top_margin"
+                    android:background="@android:color/black"
+                    android:gravity="center_horizontal"
+                    android:text="@string/sample"
+                    android:textColor="@android:color/secondary_text_dark" />
 
                 <View
-                    android:layout_width="@dimen/tick_width"
-                    android:layout_height="@dimen/tick_height"
-                    android:layout_centerInParent="true"
-                    android:background="@color/colorPrimaryDark" />
+                    android:id="@+id/sample"
+                    android:layout_width="@dimen/sample_size"
+                    android:layout_height="@dimen/sample_size"
+                    android:layout_gravity="center"
+                    android:background="@color/colorPrimary" />
 
-                <SeekBar
-                    android:id="@+id/seekBar"
+                <TextView
+                    android:id="@+id/brightness"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:minEms="3"
+                    android:textColor="@android:color/secondary_text_dark"
+                    tools:text="255" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|center_vertical"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/view_group"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:gravity="center"
+
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/brightness_adjust_lbl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/group_box_text_title_margin"
+                    android:layout_marginStart="@dimen/group_box_text_title_margin"
+                    android:layout_marginTop="@dimen/group_box_title_top_margin"
+                    android:background="@android:color/black"
+                    android:gravity="center_horizontal"
+                    android:text="@string/brightness_adjustment"
+                    android:textColor="@android:color/secondary_text_dark" />
+
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/row_height"
-                    android:layout_centerInParent="true"
-                    android:max="@integer/max_brightness"
-                    android:minWidth="@dimen/min_bright_seek"
-                    android:progress="@integer/no_brightness_adj"
-                    android:progressDrawable="@drawable/progress" />
+                    android:layout_height="48dp">
 
-            </RelativeLayout>
+                    <View
+                        android:layout_width="@dimen/tick_width"
+                        android:layout_height="@dimen/tick_height"
+                        android:layout_centerInParent="true"
+                        android:background="@color/colorPrimaryDark" />
+
+                    <SeekBar
+                        android:id="@+id/seekBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/row_height"
+                        android:layout_centerInParent="true"
+                        android:max="@integer/max_brightness"
+                        android:minWidth="@dimen/min_bright_seek"
+                        android:progress="@integer/no_brightness_adj"
+                        android:progressDrawable="@drawable/progress" />
+
+                </RelativeLayout>
+            </LinearLayout>
+
+
         </LinearLayout>
-
 
     </LinearLayout>
 
-</LinearLayout>
+
+    <include layout="@layout/floating_brightness_layout" />
+
+</RelativeLayout>

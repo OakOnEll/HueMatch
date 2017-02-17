@@ -1,203 +1,182 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
-    android:orientation="vertical"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_gravity="center"
-        android:layout_weight="1">
-
-        <com.oakonell.huematch.utils.AutoFitTextureView
-            android:id="@+id/texture"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerInParent="true"
-            android:layout_gravity="center" />
-
-        <include
-            layout="@layout/fps_heads_up"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:layout_margin="@dimen/text_margin" />
-
-        <include
-            layout="@layout/zoom_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentStart="true" />
-
-    </RelativeLayout>
+    android:background="@android:color/black">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@android:color/black"
         android:orientation="vertical"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_gravity="center"
-            android:layout_marginBottom="@dimen/text_margin"
-            android:layout_marginTop="@dimen/text_margin"
-            android:orientation="horizontal">
+            android:layout_weight="1">
 
-            <ImageButton
-                android:id="@+id/camera_switch"
-                android:layout_width="@dimen/fab_size"
-                android:layout_height="@dimen/fab_size"
-                android:layout_marginStart="@dimen/half_text_margin"
-                android:layout_weight="1"
-                android:background="@drawable/ripple_rounded_button"
-                android:contentDescription="Switch camera"
-                android:src="@drawable/ic_camera_rear_variant_black_24dp" />
+            <com.oakonell.huematch.utils.AutoFitTextureView
+                android:id="@+id/texture"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center" />
 
-            <View
-                android:layout_width="@dimen/fab_size"
-                android:layout_height="1dp"
-                android:layout_marginStart="@dimen/half_text_margin"
-                android:layout_weight="1"
-                android:visibility="invisible" />
+            <include
+                layout="@layout/fps_heads_up"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="@dimen/text_margin" />
 
-            <ImageButton
-                android:id="@+id/btn_sample_still"
-                android:layout_width="@dimen/fab_size"
-                android:layout_height="@dimen/fab_size"
-                android:layout_marginStart="@dimen/half_text_margin"
-                android:layout_weight="1"
-                android:background="@drawable/ripple_rounded_button"
-                android:contentDescription="@string/image_access_sample_still"
-                android:src="@drawable/ic_photo_camera_black_24dp" />
+            <include
+                layout="@layout/zoom_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentStart="true" />
 
-
-            <ImageButton
-                android:id="@+id/btn_sample_continuously"
-                android:layout_width="@dimen/fab_size"
-                android:layout_height="@dimen/fab_size"
-                android:layout_marginStart="@dimen/half_text_margin"
-                android:layout_weight="1"
-                android:background="@drawable/ripple_rounded_button"
-                android:contentDescription="@string/image_access_sample_continuous"
-                android:src="@drawable/ic_videocam_black_24dp" />
-
-            <View
-                android:layout_width="@dimen/fab_size"
-                android:layout_height="1dp"
-                android:layout_marginStart="@dimen/half_text_margin"
-                android:layout_weight="1"
-                android:visibility="invisible" />
-
-            <View
-                android:layout_width="@dimen/fab_size"
-                android:layout_height="1dp"
-                android:layout_marginEnd="@dimen/half_text_margin"
-                android:layout_marginStart="@dimen/half_text_margin"
-                android:layout_weight="1"
-                android:visibility="invisible" />
-
-        </LinearLayout>
-
+        </RelativeLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:baselineAligned="false"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/activity_vertical_margin"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin">
 
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:layout_weight="1"
-                android:background="@drawable/view_group"
-                android:gravity="center_vertical|center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="@dimen/text_margin"
+                android:layout_marginTop="@dimen/text_margin"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/text_margin"
-                    android:text="@string/sample"
-                    android:textAlignment="textEnd"
-                    android:textColor="@android:color/secondary_text_dark" />
+                <ImageButton
+                    android:id="@+id/btn_sample_still"
+                    android:layout_width="@dimen/fab_size"
+                    android:layout_height="@dimen/fab_size"
+                    android:layout_marginEnd="@dimen/half_text_margin"
+                    android:layout_marginStart="@dimen/half_text_margin"
+                    android:layout_weight="1"
+                    android:background="@drawable/ripple_rounded_button"
+                    android:contentDescription="@string/image_access_sample_still"
+                    android:src="@drawable/ic_photo_camera_black_24dp" />
 
-                <View
-                    android:id="@+id/sample"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginEnd="@dimen/text_margin"
-                    tools:background="@color/colorPrimary" />
 
-                <TextView
-                    android:id="@+id/brightness"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minEms="3"
-                    android:textColor="@android:color/secondary_text_dark"
-                    tools:text="255" />
+                <ImageButton
+                    android:id="@+id/btn_sample_continuously"
+                    android:layout_width="@dimen/fab_size"
+                    android:layout_height="@dimen/fab_size"
+                    android:layout_marginStart="@dimen/half_text_margin"
+                    android:layout_weight="1"
+                    android:background="@drawable/ripple_rounded_button"
+                    android:contentDescription="@string/image_access_sample_continuous"
+                    android:src="@drawable/ic_videocam_black_24dp" />
+
             </LinearLayout>
 
+
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:background="@drawable/view_group"
-                android:gravity="center_vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/text_margin"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical|center_horizontal"
                     android:layout_weight="1"
-                    android:text="@string/brightness_adjustment"
-                    android:textAlignment="textEnd"
-                    android:textColor="@android:color/secondary_text_dark"
-                    tools:ignore="NestedWeights" />
+                    android:background="@drawable/view_group"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:orientation="horizontal">
 
-
-                <RelativeLayout
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/row_height"
-                    android:layout_weight="1">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/text_margin"
+                        android:text="@string/sample"
+                        android:textAlignment="textEnd"
+                        android:textColor="@android:color/secondary_text_dark" />
 
                     <View
-                        android:layout_width="@dimen/tick_width"
-                        android:layout_height="@dimen/tick_height"
-                        android:layout_centerInParent="true"
-                        android:background="@color/colorPrimaryDark" />
+                        android:id="@+id/sample"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginEnd="@dimen/text_margin"
+                        tools:background="@color/colorPrimary" />
 
-                    <SeekBar
-                        android:id="@+id/seekBar"
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/brightness"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minEms="3"
+                        android:textColor="@android:color/secondary_text_dark"
+                        tools:text="255" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:background="@drawable/view_group"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/brightness_adjust_lbl"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/text_margin"
+                        android:layout_weight="1"
+                        android:text="@string/brightness_adjustment"
+                        android:textAlignment="textEnd"
+                        android:textColor="@android:color/secondary_text_dark"
+                        tools:ignore="NestedWeights" />
+
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
                         android:layout_height="@dimen/row_height"
-                        android:layout_alignParentStart="true"
-                        android:layout_alignParentTop="true"
-                        android:max="@integer/max_brightness"
-                        android:minWidth="@dimen/min_bright_seek"
-                        android:progress="@integer/no_brightness_adj"
-                        android:progressDrawable="@drawable/progress" />
+                        android:layout_weight="1">
+
+                        <View
+                            android:layout_width="@dimen/tick_width"
+                            android:layout_height="@dimen/tick_height"
+                            android:layout_centerInParent="true"
+                            android:background="@color/colorPrimaryDark" />
+
+                        <SeekBar
+                            android:id="@+id/seekBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/row_height"
+                            android:layout_alignParentStart="true"
+                            android:layout_alignParentTop="true"
+                            android:max="@integer/max_brightness"
+                            android:minWidth="@dimen/min_bright_seek"
+                            android:progress="@integer/no_brightness_adj"
+                            android:progressDrawable="@drawable/progress" />
 
 
-                </RelativeLayout>
+                    </RelativeLayout>
 
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+
+    <include layout="@layout/floating_brightness_layout" />
+
+</RelativeLayout>

@@ -4,4 +4,12 @@
     <integer name="no_brightness_adj">256</integer>
 
     <integer name="zoom_levels">10</integer>
+    <!--http://stackoverflow.com/questions/9751881/controlling-view-visibility-from-a-resources
+     Visible on screen; the default value. -
+    <enum name="visible" value="0" />
+    - Not displayed, but taken into account during layout (space is left for it). -
+    <enum name="invisible" value="1" />
+    - Completely hidden, as if the view had not been added. -
+    <enum name="gone" value="2" /> -->
+    <integer name="show_sample">2</integer>
 </resources>

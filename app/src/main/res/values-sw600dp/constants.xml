@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--       http://stackoverflow.com/questions/9751881/controlling-view-visibility-from-a-resources
+       Visible on screen; the default value. -
+    <enum name="visible" value="0" />
+    - Not displayed, but taken into account during layout (space is left for it). -
+    <enum name="invisible" value="1" />
+    - Completely hidden, as if the view had not been added. -
+    <enum name="gone" value="2" /> -->
+    <integer name="show_sample">0</integer>
+</resources>
