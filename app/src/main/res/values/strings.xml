@@ -55,6 +55,7 @@
     <string name="lights_that_are_off">Lights that are off</string>
     <string name="light_error_toast_prefix">Light error: </string>
     <string name="switch_camera">Switch camera</string>
+    <string name="brightness_adjustment_full">Brightness Adjustment</string>
 
     <plurals name="trial_over">
         <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>

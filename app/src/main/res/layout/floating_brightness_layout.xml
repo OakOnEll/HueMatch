@@ -30,7 +30,7 @@
             android:layout_marginTop="@dimen/group_box_title_top_margin"
             android:background="@android:color/black"
             android:gravity="center_horizontal"
-            android:text="@string/brightness_adjustment"
+            android:text="@string/brightness_adjustment_full"
             android:textColor="@android:color/secondary_text_dark" />
 
         <RelativeLayout
