@@ -63,6 +63,7 @@ import com.oakonell.huematch.utils.HueUtils;
 import com.oakonell.huematch.utils.ImageUtils;
 import com.oakonell.huematch.utils.LicenseUtils;
 import com.oakonell.huematch.utils.RunningFPSAverager;
+import com.oakonell.huematch.utils.ScreenSection;
 import com.philips.lighting.hue.listener.PHLightListener;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
@@ -116,6 +117,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private Set<String> controlledIds;
     private Set<String> currentSessionLightIds;
+    private Map<String, ScreenSection> lightSections;
 
     private boolean autostartContinuous;
 
@@ -198,7 +200,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             super.onCaptureCompleted(session, request, result);
             long captureCallBackStart = System.nanoTime();
             long picDuration = captureCallBackStart - captureCallBackEndTimeNs;
-            if (DEEP_DEBUG) {
+            if (DEEP_DEBUG && false) {
                 Log.i("Camera2", "capture completed -pic preview time " + TimeUnit.NANOSECONDS.toMillis(picDuration) + "ms");
 
                 StringBuilder builder = new StringBuilder("Capture Result");
@@ -951,14 +953,14 @@ public class HueMatcherActivity extends AppCompatActivity {
         protected ImageUtils.ColorAndBrightness doInBackground(BitMapData[] objects) {
             long start = System.nanoTime();
             BitMapData bitmapData = objects[0];
-            final ImageUtils.ColorAndBrightness colorAndBrightness = ImageUtils.getDominantColor(bitmapData.bitmap);
+            final Map<ScreenSection, ImageUtils.ColorAndBrightness> colorAndBrightness = ImageUtils.getDominantColor(bitmapData.bitmap);
             long statExtractTime = System.nanoTime() - start;
 
             if (DEEP_DEBUG) {
                 final String message = "Picture take time: " + TimeUnit.NANOSECONDS.toMillis(bitmapData.picDurationNs) + "ms" +
                         ", BitMap retrieval time: " + TimeUnit.NANOSECONDS.toMillis(bitmapData.bitmapDurationNs) + "ms, " +
                         "stat Extract: " + TimeUnit.NANOSECONDS.toMillis(statExtractTime) + "ms---" +
-                        " color = " + colorAndBrightness.getColor() + ", brightness= " + colorAndBrightness.getBrightness();
+                        " overall color = " + colorAndBrightness.get(ScreenSection.OVERALL).getColor() + ", overall brightness= " + colorAndBrightness.get(ScreenSection.OVERALL).getBrightness();
                 Log.i("HueMatcher", message);
                 if (captureState == CaptureState.STILL) {
                     if (DEBUG) {
@@ -972,12 +974,16 @@ public class HueMatcherActivity extends AppCompatActivity {
                 }
             }
 
-            final int adjustedBrightness = Math.max(0, Math.min(HueUtils.BRIGHTNESS_MAX, colorAndBrightness.getBrightness() + brightnessAdjustmentState.getBrightnessAdjustment()));
-            final ImageUtils.ColorAndBrightness adjustedColorAndBrightness = new ImageUtils.ColorAndBrightness(colorAndBrightness.getColor(), adjustedBrightness);
-            if (captureState != CaptureState.OFF) {
-                setLightsTo(adjustedColorAndBrightness);
+            for (ScreenSection each : ScreenSection.values()) {
+                final int adjustedBrightness = Math.max(0, Math.min(HueUtils.BRIGHTNESS_MAX, colorAndBrightness.get(each).getBrightness() + brightnessAdjustmentState.getBrightnessAdjustment()));
+                final ImageUtils.ColorAndBrightness adjustedColorAndBrightness = new ImageUtils.ColorAndBrightness(colorAndBrightness.get(each).getColor(), adjustedBrightness);
+                colorAndBrightness.put(each, adjustedColorAndBrightness);
             }
-            return adjustedColorAndBrightness;
+
+            if (captureState != CaptureState.OFF) {
+                setLightsTo(colorAndBrightness);
+            }
+            return colorAndBrightness.get(ScreenSection.OVERALL);
         }
 
         @Override
@@ -1092,6 +1098,12 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     private void createCameraPreview() {
         try {
+            if (!viewHolder.textureView.isAvailable()) {
+                // got null in a crash report... let's have this double check
+                viewHolder.textureView.setSurfaceTextureListener(textureListener);
+                return;
+            }
+
             invalidateOptionsMenu();
 
             SurfaceTexture texture = viewHolder.textureView.getSurfaceTexture();
@@ -1219,6 +1231,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         licenseUtils.onResumeCheckLicense(this);
 
         controlledIds = prefs.getControlledLightIds();
+        lightSections = prefs.getLightSections();
         if (controlledIds.isEmpty()) {
             launchLightChooser();
         }
@@ -1272,7 +1285,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
 
     @DebugLog
-    private void setLightsTo(ImageUtils.ColorAndBrightness colorAndBrightness) {
+    private void setLightsTo(Map<ScreenSection, ImageUtils.ColorAndBrightness> colorAndBrightnessBySection) {
         PHBridge bridge = phHueSDK.getSelectedBridge();
         Map<String, PHLight> lightsMap = bridge.getResourceCache().getLights();
 
@@ -1287,6 +1300,8 @@ public class HueMatcherActivity extends AppCompatActivity {
             // API takes in 100s of ms, not ms itself.
             lightState.setTransitionTime(transitionTimeHundredsOfMs);
 
+            ScreenSection lightSection = getLightSection(id);
+            ImageUtils.ColorAndBrightness colorAndBrightness = colorAndBrightnessBySection.get(lightSection);
 
             final PHLight.PHLightType lightType = light.getLightType();
             if (lightType == PHLight.PHLightType.CT_COLOR_LIGHT || lightType == PHLight.PHLightType.COLOR_LIGHT ||
@@ -1310,6 +1325,12 @@ public class HueMatcherActivity extends AppCompatActivity {
             //  bridge.updateLightState(light, lightState);   // If no bridge response is required then use this simpler form.
         }
 
+    }
+
+    private ScreenSection getLightSection(String id) {
+        ScreenSection section = lightSections.get(id);
+        if (section == null) return ScreenSection.OVERALL;
+        return section;
     }
 
 

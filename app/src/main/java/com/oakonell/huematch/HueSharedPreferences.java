@@ -5,7 +5,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
+import com.google.gson.Gson;
+import com.oakonell.huematch.utils.ScreenSection;
+
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class HueSharedPreferences {
@@ -19,6 +25,7 @@ public class HueSharedPreferences {
 
 
     private static final String CONTROLLED_LIGHT_IDS = "controlledLightIds";
+    private static final String LIGHT_SECTIONS_BY_ID = "lightSectionsById";
 
     private static HueSharedPreferences instance = null;
     private SharedPreferences mSharedPreferences = null;
@@ -65,6 +72,30 @@ public class HueSharedPreferences {
         mSharedPreferencesEditor.putStringSet(CONTROLLED_LIGHT_IDS, ids);
         return mSharedPreferencesEditor.commit();
     }
+
+    public Map<String, ScreenSection> getLightSections() {
+        final String string = mSharedPreferences.getString(LIGHT_SECTIONS_BY_ID, null);
+        if (string == null) return Collections.emptyMap();
+        final Gson gson = new Gson();
+        Map<String, String> tempMap = gson.fromJson(string, HashMap.class);
+
+        Map<String, ScreenSection> result = new HashMap<>();
+        for (Map.Entry<String, String> entry : tempMap.entrySet()) {
+            String value = entry.getValue();
+            ScreenSection section = ScreenSection.valueOf(ScreenSection.class, value);
+            result.put(entry.getKey(), section);
+        }
+        return result;
+    }
+
+    public boolean setLightSections(Map<String, ScreenSection> lightSections) {
+        final Gson gson = new Gson();
+        String serializedObject = gson.toJson(lightSections);
+
+        mSharedPreferencesEditor.putString(LIGHT_SECTIONS_BY_ID, serializedObject);
+        return mSharedPreferencesEditor.commit();
+    }
+
 
     public int getTransitionTime() {
         return mSharedPreferences.getInt(TRANSITION_TIME, DEFAULT_TRANSITION_TIME);

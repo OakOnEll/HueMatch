@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import com.oakonell.huematch.BuildConfig;
 import com.oakonell.huematch.R;
 import com.oakonell.huematch.iab.IabException;
 import com.oakonell.huematch.iab.IabHelper;
@@ -153,6 +154,7 @@ public class LicenseUtils {
     }
 
     private boolean isPurchased(Activity activity, Inventory inventory) {
+        if (BuildConfig.DEBUG) return true;
         final Purchase purchase = inventory.getPurchase(FULL_APP_SKU);
         return purchase != null;
     }

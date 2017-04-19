@@ -1,6 +1,7 @@
 package com.oakonell.huematch;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,14 +18,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.oakonell.huematch.hue.PHHomeActivity;
+import com.oakonell.huematch.utils.ScreenSection;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHBridgeConfiguration;
@@ -34,6 +39,7 @@ import com.philips.lighting.model.PHLight;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -113,16 +119,19 @@ public class ControlledLightsActivity extends AppCompatActivity {
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // save checked lights to prefs
+                // save checked lights and their screen section to prefs
                 Set<String> result = new HashSet<>();
+                Map<String, ScreenSection> lightSections = new HashMap<String, ScreenSection>();
                 for (LightOrRoom each : lightsAdapter.list) {
                     if (each.getType() == Type.ROOM) continue;
                     Light light = (Light) each;
                     if (light.isControlled()) {
                         result.add(light.getId());
+                        lightSections.put(light.getId(), light.getSection());
                     }
                 }
                 prefs.setControlledLightIds(result);
+                prefs.setLightSections(lightSections);
 
                 // save the transition time
                 int transitionTime = transition_time_seek.getProgress();
@@ -160,6 +169,15 @@ public class ControlledLightsActivity extends AppCompatActivity {
         super.onResume();
 
         final PHBridge bridge = phHueSDK.getSelectedBridge();
+        if (bridge == null) {
+            Intent intent = new Intent(getApplicationContext(), PHHomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+                intent.addFlags(0x8000); // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
+            startActivity(intent);
+            finish();
+        }
 
         final PHBridgeConfiguration bridgeConfiguration = bridge.getResourceCache().getBridgeConfiguration();
         String bridgeName = bridgeConfiguration.getName();
@@ -201,6 +219,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
         // setup controlled lights
         Set<String> controlledIds = prefs.getControlledLightIds();
+        final Map<String, ScreenSection> lightSections = prefs.getLightSections();
 
         List<LightOrRoom> list = new ArrayList<>();
 
@@ -215,6 +234,11 @@ public class ControlledLightsActivity extends AppCompatActivity {
                 list.add(light);
                 if (controlledIds.contains(lightId)) {
                     light.setControlled(true);
+                    ScreenSection section = lightSections.get(lightId);
+                    if (section == null) {
+                        section = ScreenSection.OVERALL;
+                    }
+                    light.setSection(section);
                 }
             }
         }
@@ -251,13 +275,43 @@ public class ControlledLightsActivity extends AppCompatActivity {
     protected void onDestroy() {
         PHBridge bridge = phHueSDK.getSelectedBridge();
         if (bridge != null) {
-
             if (phHueSDK.isHeartbeatEnabled(bridge)) {
                 phHueSDK.disableHeartbeat(bridge);
             }
 
             phHueSDK.disconnect(bridge);
-            super.onDestroy();
+        }
+        super.onDestroy();
+    }
+
+
+    private static class ScreenSectionArrayAdapter extends ArrayAdapter<ScreenSection> {
+
+        public ScreenSectionArrayAdapter(Context context) {
+            super(context, R.layout.image_spinner_layout, R.id.text);
+            addAll(ScreenSection.values());
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View item = super.getView(position, convertView, parent);
+
+            ScreenSection section = getItem(position);
+            ((TextView) item.findViewById(R.id.text)).setText(section.getStringResourceId());
+            ((ImageView) item.findViewById(R.id.icon)).setImageResource(section.getImageResourceId());
+
+            return item;
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView, ViewGroup parent) {
+            View item = super.getDropDownView(position, convertView, parent);
+
+            ScreenSection section = getItem(position);
+            ((TextView) item.findViewById(R.id.text)).setText(section.getStringResourceId());
+            ((ImageView) item.findViewById(R.id.icon)).setImageResource(section.getImageResourceId());
+
+            return item;
         }
     }
 
@@ -273,12 +327,16 @@ public class ControlledLightsActivity extends AppCompatActivity {
         private final TextView name;
         private final CheckBox checked;
         private final ImageView image;
+        private final Spinner sectionSpinner;
+
+        private ScreenSectionArrayAdapter sectionAdapter;
 
         public LightViewHolder(View itemView) {
             super(itemView);
             checked = (CheckBox) itemView.findViewById(R.id.checked);
             image = (ImageView) itemView.findViewById(R.id.image);
             name = (TextView) itemView.findViewById(R.id.name);
+            sectionSpinner = (Spinner) itemView.findViewById(R.id.screen_section);
         }
 
         public void bind(RoomLightsAdapter roomLightsAdapter, LightOrRoom lightOrRoom) {
@@ -290,6 +348,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
             if (!light.canBeControlled()) {
                 checked.setChecked(false);
                 checked.setEnabled(false);
+                sectionSpinner.setVisibility(View.GONE);
             } else {
                 checked.setEnabled(true);
                 // handle checking the box
@@ -298,6 +357,33 @@ public class ControlledLightsActivity extends AppCompatActivity {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         light.setControlled(isChecked);
+                        if (light.isControlled()) {
+                            sectionSpinner.setVisibility(View.VISIBLE);
+                        } else {
+                            sectionSpinner.setVisibility(View.GONE);
+                        }
+                    }
+                });
+
+                sectionAdapter = new ScreenSectionArrayAdapter(roomLightsAdapter.getActivity());
+                sectionSpinner.setAdapter(sectionAdapter);
+
+                if (light.isControlled()) {
+                    sectionSpinner.setVisibility(View.VISIBLE);
+                } else {
+                    sectionSpinner.setVisibility(View.GONE);
+                }
+                final ScreenSection lightSection = light.getSection();
+                this.sectionSpinner.setSelection(sectionAdapter.getPosition(lightSection));
+                this.sectionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        light.setSection(sectionAdapter.getItem(position));
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+
                     }
                 });
             }
@@ -330,6 +416,10 @@ public class ControlledLightsActivity extends AppCompatActivity {
         public RoomLightsAdapter(Activity activity, List<LightOrRoom> list) {
             this.list = list;
             this.activity = activity;
+        }
+
+        public Activity getActivity() {
+            return activity;
         }
 
         @Override
@@ -376,6 +466,7 @@ public class ControlledLightsActivity extends AppCompatActivity {
         private final int imageResource;
         private final boolean controllable;
         private boolean controlled;
+        private ScreenSection section = ScreenSection.OVERALL;
 
         Light(PHLight phLight) {
             this.phLight = phLight;
@@ -425,6 +516,14 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
         public void setControlled(boolean controlled) {
             this.controlled = controlled;
+        }
+
+        public ScreenSection getSection() {
+            return section;
+        }
+
+        public void setSection(ScreenSection section) {
+            this.section = section;
         }
 
         public String getId() {

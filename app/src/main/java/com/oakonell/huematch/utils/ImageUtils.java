@@ -6,9 +6,12 @@ import android.util.Log;
 import android.util.Size;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Rob on 1/20/2017.
@@ -119,43 +122,116 @@ public class ImageUtils {
 //        return (R + B + G) / (n * 3);
 //    }
 //
-    public static ColorAndBrightness getDominantColor(Bitmap bitmap) {
+    private static class ColorBuckets {
+        int redBucket;
+        int greenBucket;
+        int blueBucket;
+    }
+
+    public static Map<ScreenSection, ColorAndBrightness> getDominantColor(Bitmap bitmap) {
         //http://stackoverflow.com/questions/12408431/how-can-i-get-the-average-colour-of-an-image
-        if (null == bitmap) return new ColorAndBrightness(Color.TRANSPARENT, NO_IMAGE_BRIGHTNESS);
+        if (null == bitmap) {
+            Map<ScreenSection, ColorAndBrightness> result = new HashMap<>();
+            for (ScreenSection each : ScreenSection.values()) {
+                result.put(each, new ColorAndBrightness(Color.TRANSPARENT, NO_IMAGE_BRIGHTNESS));
+            }
+            return result;
+        }
 
-        int redBucket = 0;
-        int greenBucket = 0;
-        int blueBucket = 0;
-        int alphaBucket = 0;
+        ColorBuckets[] bucketsBySectionOrdinal = new ColorBuckets[ScreenSection.values().length];
 
-        boolean hasAlpha = bitmap.hasAlpha();
         int pixelCount = bitmap.getWidth() * bitmap.getHeight();
         int[] pixels = new int[pixelCount];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
-        for (int y = 0, h = bitmap.getHeight(); y < h; y++) {
-            for (int x = 0, w = bitmap.getWidth(); x < w; x++) {
+        for (ScreenSection each : ScreenSection.values()) {
+            bucketsBySectionOrdinal[each.ordinal()] = new ColorBuckets();
+        }
+
+
+        final int width = bitmap.getWidth();
+        final int height = bitmap.getHeight();
+        final int halfWidth = width / 2;
+        final int halfHeight = height / 2;
+        for (int y = 0, h = height; y < h; y++) {
+            for (int x = 0, w = width; x < w; x++) {
                 int color = pixels[x + y * w]; // x + y * width
-                redBucket += (color >> 16) & 0xFF; // Color.red
-                greenBucket += (color >> 8) & 0xFF; // Color.greed
-                blueBucket += (color & 0xFF); // Color.blue
-                if (hasAlpha) alphaBucket += (color >>> 24); // Color.alpha
+
+                ScreenSection[] sections;
+                if (x < halfWidth) {
+                    if (y < halfHeight) {
+                        sections = UPPER_LEFT_SECTIONS;
+                    } else {
+                        sections = LOWER_LEFT_SECTIONS;
+                    }
+                } else {
+                    if (y < halfHeight) {
+                        sections = UPPER_RIGHT_SECTIONS;
+                    } else {
+                        sections = LOWER_RIGHT_SECTIONS;
+                    }
+                }
+
+                int red = (color >> 16) & 0xFF;
+                int green = (color >> 8) & 0xFF;
+                int blue = (color & 0xFF);
+                for (int i = 0; i < NUM_SECTIONS_FOR_PIXEL; i++) {
+                    ScreenSection each = sections[i];
+
+                    ColorBuckets buckets = bucketsBySectionOrdinal[each.ordinal()];
+                    buckets.redBucket += red;
+                    buckets.greenBucket += green;
+                    buckets.blueBucket += blue;
+                }
+
             }
         }
 
-//        return new ColorAndBrightness(Color.argb(
-//                (hasAlpha) ? (alphaBucket / pixelCount) : 255,
-//                redBucket / pixelCount,
-//                greenBucket / pixelCount,
-//                blueBucket / pixelCount),
-//                (redBucket + greenBucket + blueBucket) / (3 * pixelCount)
-//        );
-        return new ColorAndBrightness(Color.rgb(
-                redBucket / pixelCount,
-                greenBucket / pixelCount,
-                blueBucket / pixelCount),
-                (redBucket + greenBucket + blueBucket) / (3 * pixelCount)
-        );
+
+        Map<ScreenSection, ColorAndBrightness> result = new HashMap<>();
+        for (ScreenSection each : ScreenSection.values()) {
+            final ColorBuckets buckets = bucketsBySectionOrdinal[each.ordinal()];
+            final int red = buckets.redBucket;
+            final int green = buckets.greenBucket;
+            final int blue = buckets.blueBucket;
+            int numPixelsInSection = pixelCount / each.getNum();
+
+            result.put(each, new ColorAndBrightness(Color.rgb(
+                    red / numPixelsInSection,
+                    green / numPixelsInSection,
+                    blue / numPixelsInSection),
+                    (red + green + blue) / (3 * numPixelsInSection)
+            ));
+        }
+        return result;
+    }
+
+    private static final int NUM_SECTIONS_FOR_PIXEL = 4;
+    private static ScreenSection[] UPPER_LEFT_SECTIONS = new ScreenSection[NUM_SECTIONS_FOR_PIXEL];
+    private static ScreenSection[] UPPER_RIGHT_SECTIONS = new ScreenSection[NUM_SECTIONS_FOR_PIXEL];
+    private static ScreenSection[] LOWER_LEFT_SECTIONS = new ScreenSection[NUM_SECTIONS_FOR_PIXEL];
+    private static ScreenSection[] LOWER_RIGHT_SECTIONS = new ScreenSection[NUM_SECTIONS_FOR_PIXEL];
+
+    static {
+        UPPER_LEFT_SECTIONS[0] = ScreenSection.OVERALL;
+        UPPER_LEFT_SECTIONS[1] = ScreenSection.UPPER;
+        UPPER_LEFT_SECTIONS[2] = ScreenSection.UPPER_LEFT;
+        UPPER_LEFT_SECTIONS[3] = ScreenSection.LEFT;
+
+        UPPER_RIGHT_SECTIONS[0] = ScreenSection.OVERALL;
+        UPPER_RIGHT_SECTIONS[1] = ScreenSection.UPPER;
+        UPPER_RIGHT_SECTIONS[2] = ScreenSection.UPPER_RIGHT;
+        UPPER_RIGHT_SECTIONS[3] = ScreenSection.RIGHT;
+
+        LOWER_LEFT_SECTIONS[0] = ScreenSection.OVERALL;
+        LOWER_LEFT_SECTIONS[1] = ScreenSection.LOWER;
+        LOWER_LEFT_SECTIONS[2] = ScreenSection.LOWER_LEFT;
+        LOWER_LEFT_SECTIONS[3] = ScreenSection.LEFT;
+
+        LOWER_RIGHT_SECTIONS[0] = ScreenSection.OVERALL;
+        LOWER_RIGHT_SECTIONS[1] = ScreenSection.LOWER;
+        LOWER_RIGHT_SECTIONS[2] = ScreenSection.LOWER_RIGHT;
+        LOWER_RIGHT_SECTIONS[3] = ScreenSection.RIGHT;
     }
 
     public static class ColorAndBrightness {
