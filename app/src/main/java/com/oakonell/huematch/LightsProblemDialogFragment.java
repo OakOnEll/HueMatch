@@ -213,11 +213,15 @@ public class LightsProblemDialogFragment extends AppCompatDialogFragment {
     }
 
     private void continueAsIs(Collection<PHLight> okLights) {
-        String typeName = getArguments().getString(ARG_TYPE);
-        final HueMatcherActivity.CaptureState type = HueMatcherActivity.CaptureState.valueOf(typeName);
         dismiss();
 
         HueMatcherActivity activity = getMainActivity();
+        if (activity == null) {
+            return;
+        }
+
+        String typeName = getArguments().getString(ARG_TYPE);
+        final HueMatcherActivity.CaptureState type = HueMatcherActivity.CaptureState.valueOf(typeName);
         activity.setCurrentSessionLights(okLights);
         if (type == HueMatcherActivity.CaptureState.STILL) {
             activity.takeStill(true);
@@ -228,6 +232,10 @@ public class LightsProblemDialogFragment extends AppCompatDialogFragment {
     }
 
     private void cleanup() {
+        if (getMainActivity() == null) {
+            // not sure how/when this happens
+            return;
+        }
         getMainActivity().setBridgeUpdateListener(null);
     }
 
