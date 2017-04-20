@@ -1330,7 +1330,72 @@ public class HueMatcherActivity extends AppCompatActivity {
     private ScreenSection getLightSection(String id) {
         ScreenSection section = lightSections.get(id);
         if (section == null) return ScreenSection.OVERALL;
-        return section;
+        // deal with rotation
+        int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
+        if (rotation == Surface.ROTATION_0) return section;
+        if (rotation == Surface.ROTATION_180) {
+            switch (section) {
+                case LEFT:
+                    return ScreenSection.RIGHT;
+                case RIGHT:
+                    return ScreenSection.LEFT;
+                case LOWER:
+                    return ScreenSection.UPPER;
+                case UPPER:
+                    return ScreenSection.LOWER;
+                case LOWER_LEFT:
+                    return ScreenSection.UPPER_RIGHT;
+                case LOWER_RIGHT:
+                    return ScreenSection.UPPER_LEFT;
+                case UPPER_LEFT:
+                    return ScreenSection.LOWER_RIGHT;
+                case UPPER_RIGHT:
+                    return ScreenSection.LOWER_LEFT;
+            }
+        }
+        if (rotation == Surface.ROTATION_90) {
+            switch (section) {
+                case LEFT:
+                    return ScreenSection.UPPER;
+                case RIGHT:
+                    return ScreenSection.LOWER;
+                case LOWER:
+                    return ScreenSection.LEFT;
+                case UPPER:
+                    return ScreenSection.RIGHT;
+                case UPPER_LEFT:
+                    return ScreenSection.UPPER_RIGHT;
+                case UPPER_RIGHT:
+                    return ScreenSection.LOWER_RIGHT;
+                case LOWER_RIGHT:
+                    return ScreenSection.LOWER_LEFT;
+                case LOWER_LEFT:
+                    return ScreenSection.UPPER_LEFT;
+            }
+        }
+
+
+        if (rotation == Surface.ROTATION_270) {
+            switch (section) {
+                case LEFT:
+                    return ScreenSection.LOWER;
+                case RIGHT:
+                    return ScreenSection.UPPER;
+                case LOWER:
+                    return ScreenSection.RIGHT;
+                case UPPER:
+                    return ScreenSection.LEFT;
+                case UPPER_LEFT:
+                    return ScreenSection.LOWER_LEFT;
+                case UPPER_RIGHT:
+                    return ScreenSection.UPPER_LEFT;
+                case LOWER_RIGHT:
+                    return ScreenSection.UPPER_RIGHT;
+                case LOWER_LEFT:
+                    return ScreenSection.LOWER_RIGHT;
+            }
+        }
+        throw new RuntimeException("Screen section Rotation invalid?!");
     }
 
 

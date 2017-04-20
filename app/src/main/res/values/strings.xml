@@ -56,15 +56,15 @@
     <string name="light_error_toast_prefix">Light error: </string>
     <string name="switch_camera">Switch camera</string>
     <string name="brightness_adjustment_full">Brightness Adjustment</string>
-    <string name="full_screen">Full Screen</string>
-    <string name="upper_screen">Upper Screen</string>
-    <string name="lower_screen">Lower Screen</string>
-    <string name="left_screen">Left Side</string>
-    <string name="right_screen">Right Side</string>
-    <string name="upper_left_screen">Upper Left</string>
-    <string name="upper_right_screen">Upper Right</string>
-    <string name="lower_left_screen">Lower Left</string>
-    <string name="lower_right_screen">Lower Right</string>
+    <string name="full_screen"></string>
+    <string name="upper_screen"></string>
+    <string name="lower_screen"></string>
+    <string name="left_screen"></string>
+    <string name="right_screen"></string>
+    <string name="upper_left_screen"></string>
+    <string name="upper_right_screen"></string>
+    <string name="lower_left_screen"></string>
+    <string name="lower_right_screen"></string>
 
     <plurals name="trial_over">
         <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>

@@ -1,3 +1,6 @@
+v1.20
+  Support lights set from screen regions
+  Some stability bug fixes
 v1.17
   Fix for smaller screen layouts
      move switch camera to menu
