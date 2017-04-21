@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -52,6 +53,7 @@ import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -1230,6 +1232,8 @@ public class HueMatcherActivity extends AppCompatActivity {
         Log.e(TAG, "onResume");
         licenseUtils.onResumeCheckLicense(this);
 
+        showChangesIfUpdated();
+
         controlledIds = prefs.getControlledLightIds();
         lightSections = prefs.getLightSections();
         if (controlledIds.isEmpty()) {
@@ -1330,6 +1334,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     private ScreenSection getLightSection(String id) {
         ScreenSection section = lightSections.get(id);
         if (section == null) return ScreenSection.OVERALL;
+        if (section == ScreenSection.OVERALL) return ScreenSection.OVERALL;
         // deal with rotation
         int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
         if (rotation == Surface.ROTATION_0) return section;
@@ -1638,6 +1643,41 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         Log.d(TAG, "onActivityResult not handled by IABUtil.");
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void showChangesIfUpdated() {
+        PackageInfo pInfo = null;
+        try {
+            pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            return;
+        }
+        int versionCode = pInfo.versionCode;
+
+        int shownVersion = prefs.getVersionLastChangesShown();
+
+        if (versionCode == shownVersion ) return;
+        prefs.setVersionLastChangesShown(versionCode);
+
+        if (shownVersion < 0 && versionCode != 21) return;
+
+
+        String dialogTitle = getString(R.string.changelog);
+        android.support.v7.app.AlertDialog.Builder alertBuilder = new android.support.v7.app.AlertDialog.Builder(this);
+        alertBuilder.setTitle(dialogTitle);
+        final WebView wv = new WebView(this);
+        wv.getSettings().setSupportZoom(true);
+        wv.loadUrl("file:///android_asset/changelog.txt");
+
+        alertBuilder.setView(wv);
+        alertBuilder.setNegativeButton(getString(com.danielstone.materialaboutlibrary.R.string.mal_close), new android.content.DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                wv.destroy();
+                dialog.dismiss();
+            }
+        });
+        AlertDialog dialog = alertBuilder.create();
+        dialog.show();
     }
 
 

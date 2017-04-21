@@ -1,3 +1,5 @@
+v1.21
+   Fix new full screen crash
 v1.20
   Support lights set from screen regions
   Some stability bug fixes

@@ -23,6 +23,8 @@ public class HueSharedPreferences {
     private static final String DEBUGABBLE = "debuggable";
     private static final int DEFAULT_TRANSITION_TIME = 4;
 
+    private static final String VERSION_LAST_CHANGES_SHOWN = "versionChangesLastShown";
+
 
     private static final String CONTROLLED_LIGHT_IDS = "controlledLightIds";
     private static final String LIGHT_SECTIONS_BY_ID = "lightSectionsById";
@@ -123,5 +125,16 @@ public class HueSharedPreferences {
         mSharedPreferencesEditor.putBoolean(DEBUGABBLE, value);
         return mSharedPreferencesEditor.commit();
     }
+
+
+    public int getVersionLastChangesShown() {
+        return mSharedPreferences.getInt(VERSION_LAST_CHANGES_SHOWN, -1);
+    }
+
+    public boolean setVersionLastChangesShown(int version) {
+        mSharedPreferencesEditor.putInt(VERSION_LAST_CHANGES_SHOWN, version);
+        return mSharedPreferencesEditor.commit();
+    }
+
 
 }
