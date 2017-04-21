@@ -125,6 +125,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
     private final LicenseUtils licenseUtils = new LicenseUtils();
     private boolean supportsMultipleCameras;
+    private boolean paused = false;
 
 
     static class ViewHolder {
@@ -502,6 +503,7 @@ public class HueMatcherActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    if (paused) return;
                     if (captureState == CaptureState.CONTINUOUS) {
                         stopContinuous();
                         LightsProblemDialogFragment dialog = LightsProblemDialogFragment.create(CaptureState.CONTINUOUS, true, errorString);
@@ -1041,6 +1043,11 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         for (String id : controlledIds) {
             PHLight light = lightsMap.get(id);
+            // handle missing light!
+            if (light == null) {
+                Log.e(TAG, "No light with id '" + id + "' was found!");
+                continue;
+            }
             final PHLightState state = light.getLastKnownLightState();
             if (!state.isOn()) {
                 offLights.add(light);
@@ -1105,10 +1112,16 @@ public class HueMatcherActivity extends AppCompatActivity {
                 viewHolder.textureView.setSurfaceTextureListener(textureListener);
                 return;
             }
+            SurfaceTexture texture = viewHolder.textureView.getSurfaceTexture();
+            if (texture == null) {
+                // got null in a crash report... let's have this double check
+                viewHolder.textureView.setSurfaceTextureListener(textureListener);
+                return;
+            }
+
 
             invalidateOptionsMenu();
 
-            SurfaceTexture texture = viewHolder.textureView.getSurfaceTexture();
             Surface surface = new Surface(texture);
 
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
@@ -1149,6 +1162,7 @@ public class HueMatcherActivity extends AppCompatActivity {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         Log.e(TAG, "is camera open");
         try {
+            // TODO check the camera list bounds and the index... had a crash with an EMPTY? camera list?
             String cameraId = manager.getCameraIdList()[cameraIndex];
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
@@ -1217,9 +1231,9 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+            if (grantResults.length > 0 || grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 // close the app
-                Toast.makeText(HueMatcherActivity.this, "Sorry!!!, you can't use this app without granting camera permission", Toast.LENGTH_LONG).show();
+                Toast.makeText(HueMatcherActivity.this, R.string.requires_camera, Toast.LENGTH_LONG).show();
                 finish();
             }
         }
@@ -1229,6 +1243,7 @@ public class HueMatcherActivity extends AppCompatActivity {
     @DebugLog
     protected void onResume() {
         super.onResume();
+        paused = false;
         Log.e(TAG, "onResume");
         licenseUtils.onResumeCheckLicense(this);
 
@@ -1253,13 +1268,19 @@ public class HueMatcherActivity extends AppCompatActivity {
         } else {
             viewHolder.textureView.setSurfaceTextureListener(textureListener);
         }
-        Log.i(TAG, "Starting heartbeat to update cache");
-        phHueSDK.enableHeartbeat(phHueSDK.getSelectedBridge(), 2000);
+        final PHBridge bridge = phHueSDK.getSelectedBridge();
+        if (bridge != null) {
+            Log.i(TAG, "Starting heartbeat to update cache");
+            phHueSDK.enableHeartbeat(bridge, 2000);
+        } else {
+            Log.i(TAG, "No Bridge to start heartbeat");
+        }
     }
 
     @Override
     @DebugLog
     protected void onPause() {
+        paused = true;
         Log.e(TAG, "onPause");
         closeCamera();
         stopBackgroundThread();
@@ -1656,7 +1677,7 @@ public class HueMatcherActivity extends AppCompatActivity {
 
         int shownVersion = prefs.getVersionLastChangesShown();
 
-        if (versionCode == shownVersion ) return;
+        if (versionCode == shownVersion) return;
         prefs.setVersionLastChangesShown(versionCode);
 
         if (shownVersion < 0 && versionCode != 21) return;

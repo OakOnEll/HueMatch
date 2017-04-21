@@ -65,6 +65,7 @@
     <string name="upper_right_screen"></string>
     <string name="lower_left_screen"></string>
     <string name="lower_right_screen"></string>
+    <string name="requires_camera">Sorry!!!, you can\'t use this app without granting camera permission</string>
 
     <plurals name="trial_over">
         <item quantity="zero">Your 0 day trial period is over, you will be directed to purchase the app.</item>
