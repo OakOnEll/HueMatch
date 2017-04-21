@@ -33,6 +33,7 @@ import com.oakonell.huematch.utils.ScreenSection;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHBridgeConfiguration;
+import com.philips.lighting.model.PHBridgeResourcesCache;
 import com.philips.lighting.model.PHGroup;
 import com.philips.lighting.model.PHLight;
 
@@ -177,9 +178,11 @@ public class ControlledLightsActivity extends AppCompatActivity {
                 intent.addFlags(0x8000); // equal to Intent.FLAG_ACTIVITY_CLEAR_TASK which is only available from API level 11
             startActivity(intent);
             finish();
+            return;
         }
 
-        final PHBridgeConfiguration bridgeConfiguration = bridge.getResourceCache().getBridgeConfiguration();
+        final PHBridgeResourcesCache resourceCache = bridge.getResourceCache();
+        final PHBridgeConfiguration bridgeConfiguration = resourceCache.getBridgeConfiguration();
         String bridgeName = bridgeConfiguration.getName();
 
         bridgeNameView.setText(bridgeName);
@@ -223,13 +226,15 @@ public class ControlledLightsActivity extends AppCompatActivity {
 
         List<LightOrRoom> list = new ArrayList<>();
 
-        final Map<String, PHLight> lightMap = bridge.getResourceCache().getLights();
+        final Map<String, PHLight> lightMap = resourceCache.getLights();
 
-        final List<PHGroup> groups = bridge.getResourceCache().getAllGroups();
+        final List<PHGroup> groups = resourceCache.getAllGroups();
         for (PHGroup each : groups) {
             list.add(new Room(each));
             for (String lightId : each.getLightIdentifiers()) {
                 final PHLight phLight = lightMap.get(lightId);
+                //  check null! These both came from the cache.. odd that the light in the group fails to exist?
+                if (phLight == null) continue;
                 Light light = new Light(phLight);
                 list.add(light);
                 if (controlledIds.contains(lightId)) {
