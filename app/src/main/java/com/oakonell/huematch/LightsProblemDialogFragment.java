@@ -139,26 +139,27 @@ public class LightsProblemDialogFragment extends AppCompatDialogFragment {
         final StringBuilder offLightsBuilder = new StringBuilder("   ");
         final StringBuilder unreachableLightsBuilder = new StringBuilder("   ");
 
-        for (String id : controlledIds) {
-            PHLight light = lightsMap.get(id);
-            final PHLightState state = light.getLastKnownLightState();
-            if (!state.isOn()) {
-                if (!offLights.isEmpty()) {
-                    offLightsBuilder.append("\n,   ");
+        if (controlledIds != null) {
+            for (String id : controlledIds) {
+                PHLight light = lightsMap.get(id);
+                final PHLightState state = light.getLastKnownLightState();
+                if (!state.isOn()) {
+                    if (!offLights.isEmpty()) {
+                        offLightsBuilder.append("\n,   ");
+                    }
+                    offLightsBuilder.append(light.getName());
+                    offLights.add(light);
+                } else if (!state.isReachable()) {
+                    if (!unreachableLights.isEmpty()) {
+                        unreachableLightsBuilder.append("\n,   ");
+                    }
+                    unreachableLightsBuilder.append(light.getName());
+                    unreachableLights.add(light);
+                } else {
+                    okLights.add(light);
                 }
-                offLightsBuilder.append(light.getName());
-                offLights.add(light);
-            } else if (!state.isReachable()) {
-                if (!unreachableLights.isEmpty()) {
-                    unreachableLightsBuilder.append("\n,   ");
-                }
-                unreachableLightsBuilder.append(light.getName());
-                unreachableLights.add(light);
-            } else {
-                okLights.add(light);
             }
         }
-
 
         getMainActivity().runOnUiThread(new Runnable() {
             @Override
