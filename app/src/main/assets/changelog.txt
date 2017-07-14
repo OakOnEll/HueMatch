@@ -1,3 +1,7 @@
+v1.23
+   Add support for manually entering the bridge's IP
+v1.22
+   Fix some stability issues
 v1.21
    Fix new full screen crash
 v1.20

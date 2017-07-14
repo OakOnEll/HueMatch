@@ -1,15 +1,20 @@
 package com.oakonell.huematch.hue;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import com.crashlytics.android.Crashlytics;
@@ -66,6 +71,41 @@ public class PHHomeActivity extends AppCompatActivity implements OnItemClickList
         accessPointList.setOnItemClickListener(this);
         accessPointList.setAdapter(adapter);
 
+        Button manual_ip = (Button) findViewById(R.id.manual_ip);
+        manual_ip.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                promptForBridgeIP();
+            }
+        });
+
+    }
+
+    private void promptForBridgeIP() {
+        // ask for the IP address, and try to connect when OK clicked
+        AlertDialog.Builder builder = new AlertDialog.Builder(PHHomeActivity.this);
+        builder.setTitle(R.string.enter_bridge_ip_title);
+
+        final EditText input = new EditText(PHHomeActivity.this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setPositiveButton(R.string.btn_ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                PHAccessPoint accessPoint = new PHAccessPoint();
+                accessPoint.setIpAddress(input.getText().toString());
+                connectTo(accessPoint);
+            }
+        });
+        builder.setNegativeButton(R.string.btn_cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
     }
 
     @DebugLog
@@ -263,6 +303,10 @@ public class PHHomeActivity extends AppCompatActivity implements OnItemClickList
 
         PHAccessPoint accessPoint = (PHAccessPoint) adapter.getItem(position);
 
+        connectTo(accessPoint);
+    }
+
+    private void connectTo(PHAccessPoint accessPoint) {
         PHBridge connectedBridge = phHueSDK.getSelectedBridge();
 
         if (connectedBridge != null) {
